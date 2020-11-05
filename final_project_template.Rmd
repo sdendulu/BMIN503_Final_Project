@@ -1,5 +1,5 @@
 ---
-title: "BMIN503/EPID600 Project Template"
+title: "Patient Characteristics and racial/ethinic disparities in determing clinical outcomes among COVID-19 Patients"
 author: "Sri Denduluri"
 output: 
   html_document:
@@ -17,15 +17,227 @@ Use this template to complete your project throughout the course. Your Final Pro
 ### Overview
 Give a brief a description of your project and its goal(s), what data you are using to complete it, and what three faculty/staff in different fields you have spoken to about your project with a brief summary of what you learned from each person. Include a link to your final project GitHub repository.
 
+According to the published literature, COVID-19 is disproportionately affecting gender,racial, 
+and ethnic minorities but patient-level observations of hospital length of stay, ICU status and 
+even mortality by race and ethicity are very limited. The objective of this study is to  
+systematically determine what patient characteristics and pre-existing health conditions
+associated with COVID-19 outcomes and how do they differ by racial/ethnic disparities?
+
 
 ### Introduction 
 Describe the problem addressed, its significance, and some background to motivate the problem.
 
 Explain why your problem is interdisciplinary, what fields can contribute to its understanding, and incorporate background related to what you learned from meeting with faculty/staff.
 
+Coronavirus disease is caused by severe acute respiratory syndrome coronavirus 2 (SARS-CoV-2)
+and was first detected in Wuhan, China in 2019. The disease has impacted over 150 countries and 
+emerged as a global pandemic infecting over 1.5 million patients in the United States as of 
+early June 2020. Since the U.S has become the epicenter of this crisis, multiple studies were 
+undertaken to study the disease manifestations and patient outcomes to show the impact of this 
+crisis nationwide.There is a sharp rise of COVID-19 infections in U.S. and along with population 
+concerns have also emerged regarding the COVID-19 infections disproportionately impacting racial/ethnic 
+minorities. Multiple studies have been reported that people who belong certain racial and 
+ethnic groups have a higher rates of hospitalization. Earlier studies have also reported that 
+people who are aged and smoke and those who have had existing co-morbid conditions are mostly 
+likely to be affected by COVID-19 with higher infection rates, higher disease severity and even 
+mortality. Despite the early studies on these disparities, the substantial evidence supporting 
+patient-level studies on the observed disparity with appropriate co-morbid conditions,patient 
+characteristics and clinical outcomes differ by race/ethnicity among hospitalized patients with 
+COVID-19 are lacking.
+
 
 ### Methods
 Describe the data used and general methodological approach. Subsequently, incorporate full R code necessary to retrieve and clean data, and perform analysis. Be sure to include a description of code so that others (including your future self) can understand what you are doing and why. 
+
+```{r eval = TRUE}
+
+Pat_Demo = read.csv("C:/Users/Administrator/Downloads/COVID_Pats.csv",header = TRUE, stringsAsFactors = TRUE)
+
+Pat_Comorb = read.csv("C:/Users/Administrator/Downloads/COVID_Comorb.csv",header = TRUE, stringsAsFactors = TRUE)
+                      
+str(Pat_Demo)
+str(Pat_Comorb)
+
+##Gender included in the database
+unique(Pat_Demo$Gender)
+
+## group by Gender
+Pat_counts <- Pat_Demo %>% group_by(Gender) %>%
+  summarize(count = n())
+
+Pat_counts
+
+
+## group by Category amd Deceased status
+Cat_counts <- Pat_Demo %>% 
+  filter(Category == 'Confirmed' | Category == 'Ruled Out') %>%
+  group_by(Category,Race,Deceased_Status) %>%
+  summarize(count = n())
+
+Cat_counts2 <- Pat_Demo %>%
+  filter(Category == 'Confirmed' | Category == 'Ruled Out') %>%
+  filter(Race == 'White' | Race == 'Black') %>%
+  group_by(Category,Race,Deceased_Status) %>%
+  summarize(count = n())
+
+Cat_counts3 <- Pat_Demo %>%
+  filter(Category == 'Confirmed' | Category == 'Ruled Out') %>%
+  filter(Race == 'White' | Race == 'Black') %>%
+  group_by(Category,Race,Deceased_Status) %>%
+  summarize(count = n())
+
+Cat_counts
+
+plot1 <- ggplot(data = Cat_counts, aes(x = Category, y = count, fill = Race)) +
+  ggtitle("Confirmed and Ruled-out Patients and Race") +
+  geom_bar(stat = 'identity')
+
+plot2 <- ggplot(data = Cat_counts, aes(x = Category, y = count, fill = Deceased_Status)) +
+  ggtitle("Confirmed and Ruled-out Patients and Deceased Status") +
+  geom_bar(stat = "identity")
+
+plot3 <- ggplot(data = Cat_counts2, aes(x = Race, y = count, fill = Category)) +
+  ggtitle("Patients Race and COVID Status") +
+  geom_bar(stat = 'identity')
+
+plot4 <- ggplot(data = Cat_counts2, aes(x = Race, y = count, fill = Deceased_Status)) + 
+  geom_bar(stat = 'identity')
+
+plot4
+
+##mean departure delay time per carrier
+Avg_LOS <-Pat_Demo  %>% 
+  filter(Category == 'Confirmed' & Race  %in% c("East Indian", "White", "Asian", "Black","HLW-Hispanic Latino/White", 
+                      "HLB-Hispanic Latino/Black", "American Indian","Pacific Island ")) %>%
+  group_by(Race) %>% 
+  summarize(AvG_Length_of_Stay = mean(as.numeric(LOS), na.rm=TRUE), counts = n()) %>%
+  arrange(desc(AvG_Length_of_Stay))
+
+Avg_LOS
+
+#g <- ggplot(Avg_LOS, aes(x = Race, y = as.numeric(AvG_Length_of_Stay), 
+                                #  title = "Average LOS - Graph"))
+
+#g + geom_point(color = "Black") + geom_smooth() + ylab("AvG Length_of Stay") +
+  #xlab("Race")
+
+groupColor <- setNames(Avg_LOS$Race, Avg_LOS$AvG_Length_of_Stay)
+
+g1 <-ggplot(Avg_LOS, aes(x = Race, y = AvG_Length_of_Stay)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = groupColor, name = "Groups") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+g1
+
+# not working yet below
+
+p <- ggplot(Avg_LOS, aes( x = Race, y = AvG_Length_of_Stay,fill=Race))
+p + geom_boxplot()
+
+T1 <- ggplot(data = Avg_LOS, mapping = aes(x = Race, y = AvG_Length_of_Stay)) +
+  geom_boxplot(alpha = 0) +
+  geom_jitter(alpha = 0.3, color = "tomato")
+
+T1
+
+
+
+# Draw plot
+theme_set(theme_bw())
+T5 <-ggplot(Avg_LOS, aes(x = Race, y = AvG_Length_of_Stay)) + 
+  geom_bar(stat="identity", width=.5, fill="tomato3") + 
+  labs(title="Avg LOS Bar Chart", 
+       subtitle="Race Vs LOS", 
+       caption="Avg LOS") + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6))
+
+
+T5
+
+dat <- data.frame(
+  Ending_Average = c(0.275, 0.296, 0.259),
+  Runner_On_Average = c(0.318, 0.545, 0.222),
+  Batter = as.factor(c("Jason Kipnis", "Tyler Naquin",
+                       "Carlos Santana"))
+)
+
+dat_long <- dat %>%
+  gather("Stat", "Value", -Batter)
+
+dat_long
+
+T6 <-ggplot(dat_long, aes(x = Batter, y = Value, fill = Stat)) +
+  geom_col(position = "dodge")
+
+#BiVariate and Multi-Variate analysis
+
+Pat_Demo <- merge(Pat_Demo, Pat_Comorb)
+
+demo.glm1 <- glm(as.numeric(LOS) ~ as.numeric(Age) + as.numeric(Gender) + as.numeric(Race) + as.numeric(Smoking_Status), data = Pat_Demo)
+summary(demo.glm1)
+
+demo.glm2 <- glm(as.numeric(ICU_Dept_YN) ~ as.numeric(Age) + as.numeric(Gender) + as.numeric(Race) + as.numeric(Smoking_Status) + as.numeric(Obesity), data = Pat_Demo)
+summary(demo.glm2)
+
+demo.lm2 <- lm(as.numeric(ICU_Dept_YN) ~ as.numeric(LOS), data = Pat_Demo)
+summary(demo.lm2)
+
+demo.glm3 <- glm(as.numeric(Deceased_Status) ~ as.numeric(Age) + as.numeric(Gender) + as.numeric(Race) + as.numeric(Smoking_Status) + as.numeric(Obesity), data = Pat_Demo)
+summary(demo.glm3)
+
+demo.glm4 <- glm(as.numeric(Ventilator_YN) ~ as.numeric(Age) + as.numeric(Gender) + as.numeric(Race) + as.numeric(Smoking_Status), data = Pat_Demo)
+summary(demo.glm4)
+
+
+
+ggplot(Pat_Demo, aes(x = Age, y = ICU_Dept_YN)) +     # very significant
+  geom_boxplot()
+
+ggplot(Pat_Demo, aes(x = Gender, y = ICU_Dept_YN)) +  # very significant
+  geom_bar(stat = 'identity')
+
+ggplot(Pat_Demo, aes(x = Race, y = ICU_Dept_YN)) +  # significant
+  geom_bar(stat = 'identity')
+
+ggplot(Pat_Demo, aes(x = Smoking_Status, y = ICU_Dept_YN)) + 
+  geom_bar(stat = 'identity')
+
+ggplot(Pat_Demo, aes(x = Obesity, y = ICU_Dept_YN)) + # very significant
+  geom_bar(stat = 'identity')
+
+ggplot(Pat_Demo, aes(x = Ventilator_YN, y = ICU_Dept_YN)) + 
+  geom_bar(stat = 'identity')
+
+ggplot(Pat_Demo, aes(x = as.numeric(LOS), y = ICU_Dept_YN)) + # very significant
+  geom_boxplot()
+
+
+
+
+ggplot(Pat_Demo, aes(x = Age, y = Deceased_Status)) +   # very significant
+  geom_boxplot()
+
+ggplot(Pat_Demo, aes(x = Gender, y = Deceased_Status)) + 
+  geom_bar(stat = 'identity')
+
+ggplot(Pat_Demo, aes(x = Race, y = Deceased_Status)) +  # very significant
+  geom_bar(stat = 'identity')
+
+ggplot(Pat_Demo, aes(x = Smoking_Status, y = Deceased_Status)) + 
+  geom_bar(stat = 'identity')
+
+ggplot(Pat_Demo, aes(x = Obesity, y = Deceased_Status)) + 
+  geom_bar(stat = 'identity')
+
+ggplot(Pat_Demo, aes(x = Ventilator_YN, y = Deceased_Status)) + 
+  geom_bar(stat = 'identity')
+
+ggplot(Pat_Demo, aes(x = as.numeric(LOS), y = Deceased_Status)) + 
+  geom_boxplot()
+
+
+``` 
+
 
 
 ### Results
