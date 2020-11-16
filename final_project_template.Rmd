@@ -47,16 +47,31 @@ COVID-19 are lacking.
 
 
 ### Methods
-Describe the data used and general methodological approach. Subsequently, incorporate full R code necessary to retrieve and clean data, and perform analysis. Be sure to include a description of code so that others (including your future self) can understand what you are doing and why. 
+Describe the data used and general methodological approach. Subsequently, incorporate full R code necessary to 
+retrieve and clean data, and perform analysis. Be sure to include a description of code so that others 
+(including your future self) can understand what you are doing and why. 
 
 
 ### Study Population: 
 
-The de-identified data sets used for this project were pulled from the PennMedicine's Clarity Database on patients who were visited to one of the hospitals at Penn Medicine for COVID-19 test. The study has the approval by the Institutional Review Board at the University of Pennsylvania as part of Division of Cardiovascular Medicine blanket-IRB approval.
+The de-identified data sets used for this project were pulled from the PennMedicine's Clarity Database on 
+patients who were visited to one of the hospitals at Penn Medicine for COVID-19 test. The study has the approval 
+by the Institutional Review Board at the University of Pennsylvania as part of Division of Cardiovascular Medicine 
+blanket-IRB approval.
 
-Using SQL-query, first I have pulled the patients who have had COVID-19 confirmed-postive (positive) and confirmed-negative (ruled-out). For these patients, I have obtained the demographics and medical comorbidities. Demographics included Age, Race,Gender,Ethnicity,Smoking Status,Length of Stay,ICU (yes/no), Ventilator (yes/no),Category (confirmed or ruled-out), Deceased Status (yes/no) as a first data set.  Comorbid conditions included any documented histories of heart failure, hypertension, angina, stroke, hyper-lipidemia, chronic obstructive pulmonary disease, chronic kidney disease, obesity and asthma respectively for the second data set.
+Using SQL-query, first I have pulled the patients who have had COVID-19 confirmed-postive (positive) and 
+confirmed-negative (ruled-out). For these patients, I have obtained the demographics and medical comorbidities. 
+Demographics included Age, Race,Gender,Ethnicity,Smoking Status,Length of Stay,ICU (yes/no), Ventilator (yes/no),
+Category (confirmed or ruled-out), Deceased Status (yes/no) as a first data set.  Comorbid conditions included any 
+documented histories of heart failure, hypertension, angina, stroke, hyper-lipidemia, chronic obstructive 
+pulmonary disease, 
+chronic kidney disease, obesity and asthma respectively for the second data set.
 
-All the patient identifiers were carefully removed and a random number was generated instead to link the data between the two data sets. Most of the variables including comorbid conditions were represented as categorical variables (yes/no) and age was represented as a numeric variable. A two Excel CSV files were created from the above data sets namely i) COVID_Pats.csv and COVID_Comorb.csv and have been loaded into R as a list of data frames called Pat_Demo and Pat_Comorb respectively.
+All the patient identifiers were carefully removed and a random number was generated instead to link the data 
+between the two data sets. Most of the variables including comorbid conditions were represented as categorical 
+variables (yes/no) and age was represented as a numeric variable. A two Excel CSV files were created from the 
+above data sets namely i) COVID_Pats.csv and COVID_Comorb.csv and have been loaded into R as a list of data frames 
+called Pat_Demo and Pat_Comorb respectively.
 
 
 
