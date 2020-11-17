@@ -86,41 +86,53 @@ str(Pat_Comorb)
 # Merged Data Set
 Pat_Merged_Data <- merge(Pat_Demo, Pat_Comorb)
 
+COVID.clean <- Pat_Merged_Data %>% 
+        dplyr::select(Age,Race,Gender,Ethnicity,Smoking_Status,LOS,ICU_Dept_YN,Ventilator_YN,Category,Deceased_Status,
+        HF,HTN,Diabetes,Angina,Hyperlipidemia,Stroke,COPD,CKD,Obesity,Asthma) %>%
+        rename(age = Age,race = Race,gender= Gender,ethnicity = Ethnicity,smoking.status = Smoking_Status, 
+               length.of.stay = LOS, icu=ICU_Dept_YN, ventilator = Ventilator_YN) %>%   
+        filter(!race  %in% c("Other","Unknown","Patient Declined")) %>% 
+        filter(smoking.status != 'Not Asked') 
+
+str(COVID.clean)
+
+
+
 #Clean Data Set
 #COVID.clean1 <- Pat_Merged_Data %>% 
- #dplyr:: select(Random_Number,LOS, Ventilator_YN, ICU_Dept_YN, Deceased_Status, Category,
-               # Age, Gender, Race, Smoking_Status,HTN,Diabetes,Angina,Hyperlipidemia,Stroke,COPD,CKD,Obesity,Asthma) %>%
  #filter(!Race  %in% c("Other","Unknown","Patient Declined")) %>% 
-  # filter(Smoking_Status != 'Not Asked') 
+   #filter(Smoking_Status != 'Not Asked') 
 
-#Clean Data Set
-COVID.clean1 <- Pat_Merged_Data %>% 
- filter(!Race  %in% c("Other","Unknown","Patient Declined")) %>% 
-   filter(Smoking_Status != 'Not Asked') 
+#For categorical outcome 
+    ggplot(COVID.clean, aes(x = icu, y = age)) +
+        geom_boxplot()
 
-##Gender included in the database
-unique(COVID.clean1$Gender)
+    ggplot(COVID.clean, aes(x = gender, fill = icu)) +
+        geom_bar(position = "dodge")
+
+    summary(glm(icu ~ age, data = COVID.clean, family = "binomial"))
+    chisq.test(table(COVID.clean$icu, COVID.clean$gender))
 
 ## group by Gender
-Pat_counts <- COVID.clean1%>% group_by(Gender) %>%
+Pat_counts <- COVID.clean%>% group_by(Gender) %>%
   summarize(count = n())
 
 Pat_counts
 
 
 ## group by Category amd Deceased status
-Cat_counts <- COVID.clean1 %>% 
+Cat_counts <- COVID.clean %>% 
   filter(Category == 'Confirmed' | Category == 'Ruled Out') %>%
   group_by(Category,Race,Deceased_Status) %>%
   summarize(count = n())
 
-Cat_counts2 <- COVID.clean1 %>%
+Cat_counts2 <- COVID.clean %>%
   filter(Category == 'Confirmed' | Category == 'Ruled Out') %>%
   filter(Race == 'White' | Race == 'Black') %>%
   group_by(Category,Race,Deceased_Status) %>%
   summarize(count = n())
 
-Cat_counts3 <- COVID.clean1 %>%
+Cat_counts3 <- COVID.clean %>%
   filter(Category == 'Confirmed' | Category == 'Ruled Out') %>%
   filter(Race == 'White' | Race == 'Black') %>%
   group_by(Category,Race,Deceased_Status) %>%
@@ -146,7 +158,7 @@ ggplot(data = Cat_counts2, aes(x = Race, y = count, fill = Deceased_Status)) +
 
 
 ##mean average length of stay based on race
-Avg_LOS <-COVID.clean1  %>% 
+Avg_LOS <-COVID.clean  %>% 
   filter(Category == 'Confirmed' & Race  %in% c("East Indian", "White", "Asian", "Black","HLW-Hispanic Latino/White", 
                       "HLB-Hispanic Latino/Black", "American Indian","Pacific Island ")) %>%
   group_by(Race) %>% 
