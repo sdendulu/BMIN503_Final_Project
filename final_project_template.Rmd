@@ -76,6 +76,8 @@ called Pat_Demo and Pat_Comorb respectively.
 
 
 ```{r eval = TRUE}
+  library(dplyr)
+  library(ggplot2)
 Pat_Demo = read.csv("C:/Users/Administrator/Downloads/COVID_Pats1.csv",header = TRUE, stringsAsFactors = TRUE)
 
 Pat_Comorb = read.csv("C:/Users/Administrator/Downloads/COVID_Comorb1.csv",header = TRUE, stringsAsFactors = TRUE)
@@ -89,21 +91,22 @@ Pat_Merged_Data <- merge(Pat_Demo, Pat_Comorb)
 COVID.clean <- Pat_Merged_Data %>% 
         dplyr::select(Age,Race,Gender,Ethnicity,Smoking_Status,LOS,ICU_Dept_YN,Ventilator_YN,Category,Deceased_Status,
         HF,HTN,Diabetes,Angina,Hyperlipidemia,Stroke,COPD,CKD,Obesity,Asthma) %>%
-        rename(age = Age,race = Race,gender= Gender,ethnicity = Ethnicity,smoking.status = Smoking_Status, 
-               length.of.stay = LOS, icu=ICU_Dept_YN, ventilator = Ventilator_YN) %>%   
+        rename(age = Age,race = Race,gender= Gender,ethnicity = Ethnicity,smoking.status = Smoking_Status,category = Category,
+            deceased.status = Deceased_Status,length.of.stay = LOS, icu=ICU_Dept_YN, ventilator = Ventilator_YN) %>%   
         filter(!race  %in% c("Other","Unknown","Patient Declined")) %>% 
+        filter(!category  %in% c("Ruled Out")) %>% 
         filter(smoking.status != 'Not Asked') 
 
 str(COVID.clean)
 
+## Patient Population by race
+Pat_counts <- COVID.clean%>% 
+  group_by(race) %>%
+  summarize(count = n())
 
+Pat_counts
 
-#Clean Data Set
-#COVID.clean1 <- Pat_Merged_Data %>% 
- #filter(!Race  %in% c("Other","Unknown","Patient Declined")) %>% 
-   #filter(Smoking_Status != 'Not Asked') 
-
-#For categorical outcome 
+#For outcome ICU versus age, gender
     ggplot(COVID.clean, aes(x = icu, y = age)) +
         geom_boxplot()
 
@@ -112,183 +115,162 @@ str(COVID.clean)
 
     summary(glm(icu ~ age, data = COVID.clean, family = "binomial"))
     chisq.test(table(COVID.clean$icu, COVID.clean$gender))
+    
+#For categorical outcome deceased status versus LOS, icu
+    ggplot(COVID.clean, aes(x = deceased.status, y = as.numeric(length.of.stay))) +
+        geom_boxplot()
 
-## group by Gender
-Pat_counts <- COVID.clean%>% group_by(Gender) %>%
-  summarize(count = n())
+    ggplot(COVID.clean, aes(x = icu, fill = deceased.status)) +
+        geom_bar(position = "dodge")
 
-Pat_counts
+    summary(glm(icu ~ as.numeric(length.of.stay), data = COVID.clean, family = "binomial"))
+    chisq.test(table(COVID.clean$deceased.status, COVID.clean$icu))
+   
+    
+#For categorical outcome ventilator versus asthma and obesity
+    ggplot(COVID.clean, aes(x = ventilator, fill = Asthma)) +
+        geom_bar(position = "dodge")
 
+    ggplot(COVID.clean, aes(x = Obesity, fill = ventilator)) +
+        geom_bar(position = "dodge")
 
-## group by Category amd Deceased status
+    summary(glm(icu ~ Asthma, data = COVID.clean, family = "binomial"))
+    chisq.test(table(COVID.clean$ventilator, COVID.clean$Obesity))
+    
+
+## group COVID patients by Race and Deceased status
 Cat_counts <- COVID.clean %>% 
-  filter(Category == 'Confirmed' | Category == 'Ruled Out') %>%
-  group_by(Category,Race,Deceased_Status) %>%
+  filter(race == 'White' | race == 'Black') %>%
+  group_by(race,deceased.status) %>%
   summarize(count = n())
 
-Cat_counts2 <- COVID.clean %>%
-  filter(Category == 'Confirmed' | Category == 'Ruled Out') %>%
-  filter(Race == 'White' | Race == 'Black') %>%
-  group_by(Category,Race,Deceased_Status) %>%
-  summarize(count = n())
-
-Cat_counts3 <- COVID.clean %>%
-  filter(Category == 'Confirmed' | Category == 'Ruled Out') %>%
-  filter(Race == 'White' | Race == 'Black') %>%
-  group_by(Category,Race,Deceased_Status) %>%
-  summarize(count = n())
-
-Cat_counts
-
-ggplot(data = Cat_counts, aes(x = Category, y = count, fill = Race)) +
-  ggtitle("Confirmed and Ruled-out Patients and Race") +
-  geom_bar(stat = 'identity')
-
- ggplot(data = Cat_counts, aes(x = Category, y = count, fill = Deceased_Status)) +
-  ggtitle("Confirmed and Ruled-out Patients and Deceased Status") +
-  geom_bar(stat = "identity")
-
-ggplot(data = Cat_counts2, aes(x = Race, y = count, fill = Category)) +
-  ggtitle("Patients Race and COVID Status") +
-  geom_bar(stat = 'identity')
-
-ggplot(data = Cat_counts2, aes(x = Race, y = count, fill = Deceased_Status)) + 
+ggplot(data = Cat_counts, aes(x = race, y = count, fill = deceased.status)) +
+  ggtitle("Deceased Status and Race") +
   geom_bar(stat = 'identity')
 
 
 
 ##mean average length of stay based on race
 Avg_LOS <-COVID.clean  %>% 
-  filter(Category == 'Confirmed' & Race  %in% c("East Indian", "White", "Asian", "Black","HLW-Hispanic Latino/White", 
+  filter(category == 'Confirmed' & race  %in% c("East Indian", "White", "Asian", "Black","HLW-Hispanic Latino/White", 
                       "HLB-Hispanic Latino/Black", "American Indian","Pacific Island ")) %>%
-  group_by(Race) %>% 
-  summarize(AvG_Length_of_Stay = mean(as.numeric(LOS), na.rm=TRUE), counts = n()) %>%
+  group_by(race) %>% 
+  summarize(AvG_Length_of_Stay = mean(as.numeric(length.of.stay), na.rm=TRUE), counts = n()) %>%
   arrange(desc(AvG_Length_of_Stay))
 
-Avg_LOS
+  Avg_LOS
 
-#g <- ggplot(Avg_LOS, aes(x = Race, y = as.numeric(AvG_Length_of_Stay), 
-                                #  title = "Average LOS - Graph"))
-
-#g + geom_point(color = "Black") + geom_smooth() + ylab("AvG Length_of Stay") +
-  #xlab("Race")
-
-groupColor <- setNames(Avg_LOS$Race, Avg_LOS$AvG_Length_of_Stay)
-
-g1 <-ggplot(Avg_LOS, aes(x = Race, y = AvG_Length_of_Stay)) +
-  geom_bar(stat = "identity") +
-  scale_fill_manual(values = groupColor, name = "Groups") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
-g1
-
-# not working yet below
-
-p <- ggplot(Avg_LOS, aes( x = Race, y = AvG_Length_of_Stay,fill=Race))
-p + geom_boxplot()
-
-T1 <- ggplot(data = Avg_LOS, mapping = aes(x = Race, y = AvG_Length_of_Stay)) +
-  geom_boxplot(alpha = 0) +
-  geom_jitter(alpha = 0.3, color = "tomato")
-
-T1
-
-
-
-# Draw plot
+#average length of stay of patients by race
 theme_set(theme_bw())
-T5 <-ggplot(Avg_LOS, aes(x = Race, y = AvG_Length_of_Stay)) + 
+ggplot(Avg_LOS, aes(x = race, y = AvG_Length_of_Stay)) + 
   geom_bar(stat="identity", width=.5, fill="tomato3") + 
-  labs(title="Avg LOS Bar Chart", 
+  labs(title="Average length of stay by race", 
        subtitle="Race Vs LOS", 
        caption="Avg LOS") + 
   theme(axis.text.x = element_text(angle=65, vjust=0.6))
 
 
-T5
+
+#Multi-Variate analysis
+
+los.glm <- glm(as.numeric(length.of.stay) ~ as.numeric(age) + gender + race + smoking.status + HF + HTN + Diabetes +
+              +Angina + Stroke + COPD + CKD + Obesity + Asthma,data = COVID.clean)
+summary(los.glm)
 
 
-#BiVariate and Multi-Variate analysis
+icu.glm <- glm(as.numeric(icu) ~ as.numeric(age) + gender + race + smoking.status + HF + HTN + Diabetes +
+              +Angina + Stroke + COPD + CKD + Obesity + Asthma,data = COVID.clean)
+summary(icu.glm)
 
+ventilator.glm <- glm(as.numeric(ventilator) ~ as.numeric(age) + gender + race + smoking.status + HF + HTN + Diabetes +
+              +Angina + Stroke + COPD + CKD + Obesity + Asthma,data = COVID.clean)
+summary(ventilator.glm)
 
+deceased.glm <- glm(as.numeric(deceased.status) ~ as.numeric(age) + gender + race + smoking.status + HF + HTN + Diabetes +
+              +Angina + Stroke + COPD + CKD + Obesity + Asthma,data = COVID.clean)
+summary(deceased.glm)
 
-demo.glm1 <- glm(as.numeric(LOS) ~ as.numeric(Age) + as.numeric(Gender) + as.numeric(Race) + as.numeric(Smoking_Status), data = COVID.clean1)
-summary(demo.glm1)
-
-demo.glm2 <- glm(as.numeric(ICU_Dept_YN) ~ as.numeric(Age) + as.numeric(Gender) + as.numeric(Race) + as.numeric(Smoking_Status) + as.numeric(Obesity), data = COVID.clean1)
-summary(demo.glm2)
-
-demo.lm2 <- lm(as.numeric(ICU_Dept_YN) ~ as.numeric(LOS), data = COVID.clean1)
-summary(demo.lm2)
-
-demo.glm3 <- glm(as.numeric(Deceased_Status) ~ as.numeric(Age) + as.numeric(Gender) + as.numeric(Race) + as.numeric(Smoking_Status) + as.numeric(Obesity), data = COVID.clean1)
-summary(demo.glm3)
-
-demo.glm4 <- glm(as.numeric(Ventilator_YN) ~ as.numeric(Age) + as.numeric(Gender) + as.numeric(Race) + as.numeric(Smoking_Status), data = COVID.clean1)
-summary(demo.glm4)
-
-
-
-ggplot(COVID.clean1, aes(x = Age, y = ICU_Dept_YN)) +     # very significant
-  geom_boxplot()
-
-ggplot(COVID.clean1, aes(x = Gender, y = ICU_Dept_YN)) +  # very significant
-  geom_bar(stat = 'identity')
-
-ggplot(COVID.clean1, aes(x = Race, y = ICU_Dept_YN)) +  # significant
-  geom_bar(stat = 'identity')
-
-ggplot(COVID.clean1, aes(x = Smoking_Status, y = ICU_Dept_YN)) + 
-  geom_bar(stat = 'identity')
-
-ggplot(COVID.clean1, aes(x = Obesity, y = ICU_Dept_YN)) + # very significant
-  geom_bar(stat = 'identity')
-
-ggplot(COVID.clean1, aes(x = Ventilator_YN, y = ICU_Dept_YN)) + 
-  geom_bar(stat = 'identity')
-
-ggplot(COVID.clean1, aes(x = as.numeric(LOS), y = ICU_Dept_YN)) + # very significant
-  geom_boxplot()
-
-
-
-
-ggplot(Pat_Demo, aes(x = Age, y = Deceased_Status)) +   # very significant
-  geom_boxplot()
-
-ggplot(Pat_Demo, aes(x = Gender, y = Deceased_Status)) + 
-  geom_bar(stat = 'identity')
-
-ggplot(Pat_Demo, aes(x = Race, y = Deceased_Status)) +  # very significant
-  geom_bar(stat = 'identity')
-
-ggplot(Pat_Demo, aes(x = Smoking_Status, y = Deceased_Status)) + 
-  geom_bar(stat = 'identity')
-
-ggplot(Pat_Demo, aes(x = Obesity, y = Deceased_Status)) + 
-  geom_bar(stat = 'identity')
-
-ggplot(Pat_Demo, aes(x = Ventilator_YN, y = Deceased_Status)) + 
-  geom_bar(stat = 'identity')
-
-ggplot(Pat_Demo, aes(x = as.numeric(LOS), y = Deceased_Status)) + 
-  geom_boxplot()
 
 library(ggdendro)
 library(Rtsne)
 
-covid.hclust <- hclust(dist(COVID.clean1), method = "complete")
+covid.hclust <- hclust(dist(COVID.clean), method = "complete")
 covid.dend <- dendro_data(as.dendrogram(covid.hclust))
 labels <- label(covid.dend)
-labels$Deceased_Status <- COVID.clean1$Deceased_Status[as.numeric(labels$label)]
+labels$Deceased_Status <- COVID.clean$deceased.status[as.numeric(labels$label)]
 ggplot(segment(covid.dend)) + 
   geom_segment(aes(x = x, y = y, xend = xend, yend = yend)) +
   geom_text(data = labels, aes(label = label, x = x, y = 0, color = Deceased_Status), size = 4)
 
 
+#Logistic regression
 
-str(Pat_Demo)
+#find out top variables that are significant
+decease.glm <- glm(deceased.status ~  gender + race + smoking.status + HF + HTN + Diabetes +
+              +Angina + Stroke + COPD + CKD + Obesity + Asthma + ventilator + icu,data = COVID.clean,family = binomial(logit))
+summary(decease.glm)
+
+#Logistic regression
+#obtained top variables from above step
+a4.top.glm <- glm(deceased.status ~ smoking.status + HTN + CKD + Obesity + ventilator + icu, data = COVID.clean, 
+                  family = binomial(logit))
+summary(a4.top.glm)
 
 
+glm.top.pred <- predict(a4.top.glm, COVID.clean, type = "response")
+
+#Random Forest
+library(randomForest)
+rf.top <- randomForest(deceased.status ~ smoking.status + HTN + CKD + Obesity + ventilator + icu, data = COVID.clean, 
+                       ntree = 100, importance = TRUE)
+rf.top
+
+rf.top$importance
+
+rf.top.pred <- predict(rf.top, COVID.clean, type = "prob")
+
+#10-fold cross-validation
+N = nrow(COVID.clean)
+K = 10
+set.seed(1234)
+s = sample(1:K, size = N, replace = T)
+pred_outputs.glm <- vector(mode = "numeric", length = N)
+pred_outputs.rf <- vector(mode = "numeric", length = N)
+obs_outputs <- vector(mode = "numeric", length = N)
+offset <- 0
+for(i in 1:K){
+    train <- filter(COVID.clean, s != i)
+    test <- filter(COVID.clean, s == i)
+    obs_outputs[1:length(s[s == i]) + offset] <- test$deceased.status
+    #GLM train/test
+    glm <- glm(deceased.status ~ smoking.status + HTN + CKD + Obesity + ventilator + icu, data = train, family = binomial(logit))
+    glm.pred.curr <- predict(glm, test, type = "response")
+    pred_outputs.glm[1:length(s[s == i]) + offset] <- glm.pred.curr
+
+    #RF train/test
+    rf <- randomForest(deceased.status ~ smoking.status + HTN + CKD + Obesity + ventilator + icu, data = train, ntree = 100)
+    rf.pred.curr <- predict(rf, newdata = test, type = "prob") 
+    pred_outputs.rf[1:length(s[s == i]) + offset] <- rf.pred.curr[ , 2]
+
+    offset <- offset + length(s[s == i])
+}
+
+#ROC Curves
+library(pROC)
+plot.roc(COVID.clean$deceased.status, glm.top.pred, ci = TRUE, main = "Using Top-Ranked Variables") 
+plot.roc(obs_outputs, pred_outputs.glm, ci = TRUE, col = "darkblue", add = TRUE) 
+plot.roc(COVID.clean$deceased.status, rf.top.pred[, 2], ci = TRUE, col = "darkgreen", add = TRUE)
+
+plot.roc(obs_outputs, pred_outputs.rf, ci = TRUE, col = "red", add = TRUE) 
+legend("bottomright", legend = c("GLM Training", "GLM Cross-Validation", "RF Training", "RF Cross-Validation"), col = c("black", "darkblue", "darkgreen", "red"), lwd = 2)
+
+auc(COVID.clean$deceased.status, glm.top.pred)
+
+auc(obs_outputs, pred_outputs.glm)
+
+auc(COVID.clean$deceased.status, rf.top.pred[ , 2])
+
+auc(obs_outputs, pred_outputs.rf)
 ``` 
 
 
