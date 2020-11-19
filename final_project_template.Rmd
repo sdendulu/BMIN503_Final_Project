@@ -121,7 +121,6 @@ COVID.clean <- Pat_Merged_Data %>%
 race_wb <- COVID.clean %>% 
   filter(race == 'White' | race == 'Black')
  
-race_wb
 ######### EnD PART I ##################
 
 ### PART II Univariate Analysis ###################
