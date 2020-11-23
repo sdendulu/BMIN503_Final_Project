@@ -97,9 +97,9 @@ COVID.clean <- Pat_Merged_Data %>%
         HF,HTN,Diabetes,Angina,Hyperlipidemia,Stroke,COPD,CKD,Obesity,Asthma) %>%
         rename(age = Age,race = Race,gender= Gender,ethnicity = Ethnicity,smoking.status = Smoking_Status,category = Category,
             deceased.status = Deceased_Status,length.of.stay = LOS, icu=ICU_Dept_YN, ventilator = Ventilator_YN) %>%   
-        filter(!race  %in% c("Other","Unknown","Patient Declined")) %>% 
-        filter(!category  %in% c("Ruled Out")) %>% 
-        filter(smoking.status != 'Not Asked') 
+        filter(!category  %in% c("Ruled Out"))# %>% 
+        #filter(!race  %in% c("Other","Unknown","Patient Declined")) %>% 
+       # filter(smoking.status != 'Not Asked') 
 
   str(COVID.clean)
 
@@ -120,6 +120,10 @@ COVID.clean <- Pat_Merged_Data %>%
   # race analysis
 race_wb <- COVID.clean %>% 
   filter(race == 'White' | race == 'Black')
+
+#Data set for smoking Yes/No
+smoking_set <- COVID.clean %>% 
+  filter(smoking.status == 'Yes' | smoking.status == 'No')
  
 ######### EnD PART I ##################
 
@@ -130,155 +134,202 @@ race_wb <- COVID.clean %>%
   # Predictor variables: age, race, gender, Asthma, Obesity, Diabetes, Hypertension, COPD
   # Outcome variables: ICU, Ventilator, Decease Status
   
-  # ******** ICU
-
-  #For outcome ICU versus predictor age
+# ******** ICU
+   #For outcome ICU versus predictor age
     ggplot(COVID.clean, aes(x = icu, y = age)) +
         geom_boxplot()
     summary(glm(icu ~ age, data = COVID.clean, family = "binomial"))
     chisq.test(table(COVID.clean$icu, COVID.clean$age))
     
-  #For outcome ICU versus predictor race
-    ggplot(race_wb, aes(x =icu, fill = race)) +
+  #For outcome ICU versus predictor Race
+    ggplot(race_wb, aes(x = icu, fill = race)) +
         geom_bar(position = "dodge")
-    summary(glm(icu ~ race, data = race_wb, family = "binomial"))
+    
+    model_r <- glm(formula= icu ~ race, data=race_wb, family=binomial)
+    summary(model_r)
     chisq.test(table(race_wb$icu, race_wb$race))
     
-  #For outcome ICU versus predictor gender
+    testdatayes_rw <- data.frame(race="White")
+    predict(model_r,testdatayes_rw, type="response")
+    
+    testdatayes_rb =  data.frame(race="Black")
+    predict(model_r, testdatayes_rb, type="response")
+    
+  #For outcome ICU versus predictor Gender
     ggplot(COVID.clean, aes(x = icu, fill = gender)) +
         geom_bar(position = "dodge")
-    summary(glm(icu ~ gender, data = COVID.clean, family = "binomial"))
+    
+    model_g <- glm(formula= icu ~ gender, data=COVID.clean, family=binomial)
+    summary(model_g)
     chisq.test(table(COVID.clean$icu, COVID.clean$gender))
     
-     #For outcome ICU versus predictor Asthma
-    ggplot(COVID.clean, aes(x = icu, fill = Asthma)) +
+    testdatayes_gm <- data.frame(gender="Male")
+    predict(model_g,testdatayes_gm, type="response")
+    
+    testdatayes_gf =  data.frame(gender="Female")
+    predict(model_g, testdatayes_gf, type="response")
+    
+    #For outcome ICU versus predictor smoking status
+    ggplot(smoking_set, aes(x = icu, fill = smoking.status)) +
         geom_bar(position = "dodge")
-    summary(glm(icu ~ Asthma, data = COVID.clean, family = "binomial"))
-    chisq.test(table(COVID.clean$icu, COVID.clean$Asthma))
     
+    model_smo <- glm(formula= icu ~ smoking.status, data=smoking_set, family=binomial)
+    summary(model_smo)
+    chisq.test(table(smoking_set$icu, smoking_set$smoking.status))
     
-    #For outcome ICU versus predictor Obesity
+    testdatayes_smo <- data.frame(smoking.status="Yes")
+    predict(model_smo,testdatayes_smo, type="response")
+    
+    testdatano_smo =  data.frame(smoking.status="No")
+    predict(model_smo, testdatano_smo, type="response")
+    
+     #For outcome ICU versus predictor Obesity
     ggplot(COVID.clean, aes(x = icu, fill = Obesity)) +
         geom_bar(position = "dodge")
-    summary(glm(icu ~ Obesity, data = COVID.clean, family = "binomial"))
+    
+    model <- glm(formula= icu ~ Obesity, data=COVID.clean, family=binomial)
+    summary(model)
     chisq.test(table(COVID.clean$icu, COVID.clean$Obesity))
     
-     #For outcome ICU versus predictor Diabetes
-    ggplot(COVID.clean, aes(x = icu, fill = Diabetes)) +
-        geom_bar(position = "dodge")
-    summary(glm(icu ~ Diabetes, data = COVID.clean, family = "binomial"))
-    chisq.test(table(COVID.clean$icu, COVID.clean$Diabetes))
-  
+    testdatayes <- data.frame(Obesity="Y")
+    predict(model,testdatayes, type="response")
     
-  # End ICU
+    testdatano =  data.frame(Obesity="N")
+    predict(model, testdatano, type="response")
     
-  # Start ventilator
-    #For outcome ventilator versus predictor age
+# End ICU
+    
+# ******** Ventilator
+   #For outcome ventilator versus predictor age
     ggplot(COVID.clean, aes(x = ventilator, y = age)) +
         geom_boxplot()
     summary(glm(ventilator ~ age, data = COVID.clean, family = "binomial"))
     chisq.test(table(COVID.clean$ventilator, COVID.clean$age))
     
-  #For outcome ventilator versus predictor race
+  #For outcome ventilator versus predictor Race
     ggplot(race_wb, aes(x = ventilator, fill = race)) +
         geom_bar(position = "dodge")
-    summary(glm(ventilator ~ race, data = race_wb, family = "binomial"))
+    
+    model_r <- glm(formula= ventilator ~ race, data=race_wb, family=binomial)
+    summary(model_r)
     chisq.test(table(race_wb$ventilator, race_wb$race))
     
-  #For outcome ventilator versus predictor gender
+    testdatayes_rw <- data.frame(race="White")
+    predict(model_r,testdatayes_rw, type="response")
+    
+    testdatayes_rb =  data.frame(race="Black")
+    predict(model_r, testdatayes_rb, type="response")
+    
+  #For outcome ventilator versus predictor Gender
     ggplot(COVID.clean, aes(x = ventilator, fill = gender)) +
         geom_bar(position = "dodge")
-    summary(glm(ventilator ~ gender, data = COVID.clean, family = "binomial"))
+    
+    model_g <- glm(formula= ventilator ~ gender, data=COVID.clean, family=binomial)
+    summary(model_g)
     chisq.test(table(COVID.clean$ventilator, COVID.clean$gender))
     
-     #For outcome ventilator versus predictor Asthma
-    ggplot(COVID.clean, aes(x = ventilator, fill = Asthma)) +
+    testdatayes_gm <- data.frame(gender="Male")
+    predict(model_g,testdatayes_gm, type="response")
+    
+    testdatayes_gf =  data.frame(gender="Female")
+    predict(model_g, testdatayes_gf, type="response")
+    
+    #For outcome ventilator versus predictor smoking status
+    ggplot(smoking_set, aes(x = ventilator, fill = smoking.status)) +
         geom_bar(position = "dodge")
-    summary(glm(ventilator ~ Asthma, data = COVID.clean, family = "binomial"))
-    chisq.test(table(COVID.clean$ventilator, COVID.clean$Asthma))
     
+    model_smo <- glm(formula= ventilator ~ smoking.status, data=smoking_set, family=binomial)
+    summary(model_smo)
+    chisq.test(table(smoking_set$ventilator, smoking_set$smoking.status))
     
-    #For outcome ventilator versus predictor Obesity
+    testdatayes_smo <- data.frame(smoking.status="Yes")
+    predict(model_smo,testdatayes_smo, type="response")
+    
+    testdatano_smo =  data.frame(smoking.status="No")
+    predict(model_smo, testdatano_smo, type="response")
+    
+     #For outcome ventilator versus predictor Obesity
     ggplot(COVID.clean, aes(x = ventilator, fill = Obesity)) +
         geom_bar(position = "dodge")
-    summary(glm(ventilator ~ Obesity, data = COVID.clean, family = "binomial"))
+    
+    model <- glm(formula= ventilator ~ Obesity, data=COVID.clean, family=binomial)
+    summary(model)
     chisq.test(table(COVID.clean$ventilator, COVID.clean$Obesity))
     
-     #For outcome ventilator versus predictor Diabetes
-    ggplot(COVID.clean, aes(x = ventilator, fill = Diabetes)) +
-        geom_bar(position = "dodge")
-    summary(glm(ventilator ~ Diabetes, data = COVID.clean, family = "binomial"))
-    chisq.test(table(COVID.clean$ventilator, COVID.clean$Diabetes))
+    testdatayes <- data.frame(Obesity="Y")
+    predict(model,testdatayes, type="response")
     
+    testdatano =  data.frame(Obesity="N")
+    predict(model, testdatano, type="response")
     
-    #For outcome ventilator versus predictor asthma 
-    ggplot(COVID.clean, aes(x = ventilator, fill = Asthma)) +
-        geom_bar(position = "dodge")
-    summary(glm(ventilator ~ Asthma, data = COVID.clean, family = "binomial"))
-    chisq.test(table(COVID.clean$ventilator, COVID.clean$Asthma))
+# End ventilator
     
-    #For outcome ventilator versus obesity
-     ggplot(COVID.clean, aes(x = ventilator, fill = Obesity)) +
-        geom_bar(position = "dodge")
-    summary(glm(ventilator ~ Obesity, data = COVID.clean, family = "binomial"))
-    chisq.test(table(COVID.clean$ventilator, COVID.clean$Obesity))
-    
-  # End ventilator
-    
-  # Start deceased.status
-    #For outcome deceased.status versus predictor age
+# ******** deceased.status
+   #For outcome deceased.status versus predictor age
     ggplot(COVID.clean, aes(x = deceased.status, y = age)) +
         geom_boxplot()
     summary(glm(deceased.status ~ age, data = COVID.clean, family = "binomial"))
     chisq.test(table(COVID.clean$deceased.status, COVID.clean$age))
     
-  #For outcome deceased.status versus predictor race
+  #For outcome deceased.status versus predictor Race
     ggplot(race_wb, aes(x = deceased.status, fill = race)) +
         geom_bar(position = "dodge")
-    summary(glm(deceased.status ~ race, data = race_wb, family = "binomial"))
+    
+    model_r <- glm(formula= deceased.status ~ race, data=race_wb, family=binomial)
+    summary(model_r)
     chisq.test(table(race_wb$deceased.status, race_wb$race))
     
-  #For outcome deceased.status versus predictor gender
+    testdatayes_rw <- data.frame(race="White")
+    predict(model_r,testdatayes_rw, type="response")
+    
+    testdatayes_rb =  data.frame(race="Black")
+    predict(model_r, testdatayes_rb, type="response")
+    
+  #For outcome deceased.status versus predictor Gender
     ggplot(COVID.clean, aes(x = deceased.status, fill = gender)) +
         geom_bar(position = "dodge")
-    summary(glm(deceased.status ~ gender, data = COVID.clean, family = "binomial"))
+    
+    model_g <- glm(formula= deceased.status ~ gender, data=COVID.clean, family=binomial)
+    summary(model_g)
     chisq.test(table(COVID.clean$deceased.status, COVID.clean$gender))
     
-     #For outcome deceased.status versus predictor Asthma
-    ggplot(COVID.clean, aes(x = deceased.status, fill = Asthma)) +
+    testdatayes_gm <- data.frame(gender="Male")
+    predict(model_g,testdatayes_gm, type="response")
+    
+    testdatayes_gf =  data.frame(gender="Female")
+    predict(model_g, testdatayes_gf, type="response")
+    
+    #For outcome deceased.status versus predictor smoking status
+    ggplot(smoking_set, aes(x = deceased.status, fill = smoking.status)) +
         geom_bar(position = "dodge")
-    summary(glm(deceased.status ~ Asthma, data = COVID.clean, family = "binomial"))
-    chisq.test(table(COVID.clean$deceased.status, COVID.clean$Asthma))
     
+    model_smo <- glm(formula= deceased.status ~ smoking.status, data=smoking_set, family=binomial)
+    summary(model_smo)
+    chisq.test(table(smoking_set$deceased.status, smoking_set$smoking.status))
     
-    #For outcome deceased.status versus predictor Obesity
+    testdatayes_smo <- data.frame(smoking.status="Yes")
+    predict(model_smo,testdatayes_smo, type="response")
+    
+    testdatano_smo =  data.frame(smoking.status="No")
+    predict(model_smo, testdatano_smo, type="response")
+    
+     #For outcome deceased.status versus predictor Obesity
     ggplot(COVID.clean, aes(x = deceased.status, fill = Obesity)) +
         geom_bar(position = "dodge")
-    summary(glm(deceased.status ~ Obesity, data = COVID.clean, family = "binomial"))
+    
+    model <- glm(formula= deceased.status ~ Obesity, data=COVID.clean, family=binomial)
+    summary(model)
     chisq.test(table(COVID.clean$deceased.status, COVID.clean$Obesity))
     
-     #For outcome deceased.status versus predictor Diabetes
-    ggplot(COVID.clean, aes(x = deceased.status, fill = Diabetes)) +
-        geom_bar(position = "dodge")
-    summary(glm(deceased.status ~ Diabetes, data = COVID.clean, family = "binomial"))
-    chisq.test(table(COVID.clean$deceased.status, COVID.clean$Diabetes))
+    testdatayes <- data.frame(Obesity="Y")
+    predict(model,testdatayes, type="response")
     
+    testdatano =  data.frame(Obesity="N")
+    predict(model, testdatano, type="response")
     
-    #For outcome deceased.status versus predictor asthma 
-    ggplot(COVID.clean, aes(x = deceased.status, fill = Asthma)) +
-        geom_bar(position = "dodge")
-    summary(glm(deceased.status ~ Asthma, data = COVID.clean, family = "binomial"))
-    chisq.test(table(COVID.clean$deceased.status, COVID.clean$Asthma))
+# End deceased.status
     
-    #For outcome deceased.status versus obesity
-     ggplot(COVID.clean, aes(x = deceased.status, fill = Obesity)) +
-        geom_bar(position = "dodge")
-    summary(glm(deceased.status ~ Obesity, data = COVID.clean, family = "binomial"))
-    chisq.test(table(COVID.clean$deceased.status, COVID.clean$Obesity))
-    
-  # End deceased status
-    
- # END PART II Univariate Analysis
+# END PART II Univariate Analysis
     
 
 ## group COVID patients by Race and Deceased status
@@ -331,18 +382,6 @@ deceased.glm <- glm(deceased.status ~ as.numeric(age) + gender + race + smoking.
               +Angina + Stroke + COPD + CKD + Obesity + Asthma,data = COVID.clean,family = "binomial")
             summary(deceased.glm)
 
-#  Heirarchical clustering
-
-library(ggdendro)
-library(Rtsne)
-
-covid.hclust <- hclust(dist(COVID.clean), method = "complete")
-covid.dend <- dendro_data(as.dendrogram(covid.hclust))
-labels <- label(covid.dend)
-labels$Deceased_Status <- COVID.clean$deceased.status[as.numeric(labels$label)]
-ggplot(segment(covid.dend)) + 
-  geom_segment(aes(x = x, y = y, xend = xend, yend = yend)) +
-  geom_text(data = labels, aes(label = label, x = x, y = 0, color = Deceased_Status), size = 4)
 
 
 #Logistic regression
