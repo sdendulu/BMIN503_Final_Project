@@ -12,449 +12,396 @@ output:
 options(width = 400)
 ```  
 ***
-Use this template to complete your project throughout the course. Your Final Project presentation will be based on the contents of this document. Replace the title/name above and text below with your own, but keep the headers.
-
 ### Overview
-Give a brief a description of your project and its goal(s), what data you are using to complete it, and what three faculty/staff in different fields you have spoken to about your project with a brief summary of what you learned from each person. Include a link to your final project GitHub repository.
-
-According to the published literature, COVID-19 is disproportionately affecting gender,racial, 
-and ethnic minorities but patient-level observations of hospital length of stay, ICU status and 
-even mortality by race and ethicity are very limited. The objective of this study is to  
-systematically determine what patient characteristics and pre-existing health conditions
-associated with COVID-19 outcomes and how do they differ by racial/ethnic disparities?
+According to the published literature, COVID-19 is disproportionately affecting gender, and racial minorities 
+but patient-level observations of ICU admission, ventilator requirement and even mortality by race are very limited. 
+The objective of this study is to systematically determine what patient characteristics including race are associated 
+with COVID-19 outcomes.
 
 
 ### Introduction 
-Describe the problem addressed, its significance, and some background to motivate the problem.
 
-Explain why your problem is interdisciplinary, what fields can contribute to its understanding, and incorporate background related to what you learned from meeting with faculty/staff.
-
-Coronavirus disease is caused by severe acute respiratory syndrome coronavirus 2 (SARS-CoV-2)
-and was first detected in Wuhan, China in 2019. The disease has impacted over 150 countries and 
-emerged as a global pandemic infecting over 1.5 million patients in the United States as of 
-early June 2020. Since the U.S has become the epicenter of this crisis, multiple studies were 
-undertaken to study the disease manifestations and patient outcomes to show the impact of this 
-crisis nationwide.There is a sharp rise of COVID-19 infections in U.S. and along with population 
-concerns have also emerged regarding the COVID-19 infections disproportionately impacting racial/ethnic 
-minorities. Multiple studies have been reported that people who belong certain racial and 
-ethnic groups have a higher rates of hospitalization. Earlier studies have also reported that 
-people who are aged and smoke and those who have had existing co-morbid conditions are mostly 
-likely to be affected by COVID-19 with higher infection rates, higher disease severity and even 
-mortality. Despite the early studies on these disparities, the substantial evidence supporting 
-patient-level studies on the observed disparity with appropriate co-morbid conditions,patient 
-characteristics and clinical outcomes differ by race/ethnicity among hospitalized patients with 
-COVID-19 are lacking.
+Coronavirus disease is caused by Severe Acute Respiratory Syndrome coronavirus 2 (SARS-CoV-2) and was first detected 
+in Wuhan, China in 2019. The disease has impacted over 150 countries and emerged as a global pandemic infecting 
+over 1.5 million patients in the United States as of early June 2020. Since the U.S has become the epicenter of this 
+crisis, multiple studies were undertaken to study the disease manifestations and patient outcomes to show the impact 
+of this crisis nationwide. There is a sharp rise of COVID-19 infections in U.S. and along with population concerns 
+there has also emerged awareness regarding the COVID-19 infections disproportionately impacting racial/ethnic minorities. 
+Multiple studies have been reported that people who belong certain racial and ethnic groups have higher rates of hospitalization. Earlier studies have also reported that people who are aged and smoke and those who have had existing co-morbid conditions 
+are mostly likely to be affected by COVID-19 with higher infection rates, higher disease severity and even mortality. 
+Despite the early studies, patient-level studies with appropriate co-morbid conditions, patient characteristics and 
+clinical outcomes differ by race/ethnicity among hospitalized patients with COVID-19 are lacking.
 
 
 ### Methods
-Describe the data used and general methodological approach. Subsequently, incorporate full R code necessary to 
-retrieve and clean data, and perform analysis. Be sure to include a description of code so that others 
-(including your future self) can understand what you are doing and why. 
-
 
 ### Study Population: 
 
-The de-identified data sets used for this project were pulled from the PennMedicine's Clarity Database on 
-patients who were visited to one of the hospitals at Penn Medicine for COVID-19 test. The study has the approval 
-by the Institutional Review Board at the University of Pennsylvania as part of Division of Cardiovascular Medicine 
+The de-identified data sets used for this project were pulled from the PennMedicine’s Clarity Database on patients 
+who were visited to one of the hospitals at Penn Medicine for COVID-19 test. The study has the approval by the 
+Institutional Review Board at the University of Pennsylvania as part of Division of Cardiovascular Medicine 
 blanket-IRB approval.
 
-Using SQL-query, first I have pulled the patients who have had COVID-19 confirmed-postive (positive) and 
-confirmed-negative (ruled-out). For these patients, I have obtained the demographics and medical comorbidities. 
-Demographics included Age, Race,Gender,Ethnicity,Smoking Status,Length of Stay,ICU (yes/no), Ventilator (yes/no),
-Category (confirmed or ruled-out), Deceased Status (yes/no) as a first data set.  Comorbid conditions included any 
-documented histories of heart failure, hypertension, angina, stroke, hyper-lipidemia, chronic obstructive 
-pulmonary disease, 
-chronic kidney disease, obesity and asthma respectively for the second data set.
+Using SQL-queries, I obtained two data files. First I have pulled the patients who have had COVID-19 confirmed-postive 
+(positive). For these patients, I have obtained the demographics and other-related clinical information that were related 
+to this project.. Demographics and clinical information included Age (in years) , Race (Black, White), Gender (Male Yes/No),
+Smoking Status (Tobacco exposure Yes/No), ICU admission (Yes/No), Ventilator used (Yes/No) and Deceased (Yes/No)) as a 
+first data set. A second file contained any documented history of obesity for these same patients.
 
-All the patient identifiers were carefully removed and a random number was generated instead to link the data 
-between the two data sets. Most of the variables including comorbid conditions were represented as categorical 
-variables (yes/no) and age was represented as a numeric variable. A two Excel CSV files were created from the 
-above data sets namely i) COVID_Pats.csv and COVID_Comorb.csv and have been loaded into R as a list of data frames 
-called Pat_Demo and Pat_Comorb respectively.
+All the patient identifiers were carefully removed and replaced with a unique random number to link the data between 
+the two data sets. Most of the variables were represented as categorical variables (yes/no) and age was represented 
+as a numeric variable. A two Excel CSV files were created from the above data sets namely COVID_Pats.csv and COVID_Comorb.csv 
+and have been loaded into R as data frames called Pat_Demo and Pat_Comorb respectively.
 
+The following R packages and libraries were used in this study:
+
+    ```{r eval = TRUE}
+      library(dplyr)
+      library(ggplot2)
+      library(gtsummary)
+      library(formattable)
+      library(sjPlot)
+      library(sjmisc)
+      library(sjlabelled)
+      library(ggplot2)
+      library(tidyverse)
+    ```
+
+At first, the patient data was imported from their respective csv files and they were imported into two data frames.
+
+    ```{r eval = TRUE}
+
+#Data read from CSV files
+Pat_Demo = read.csv("C:/Users/Administrator/Downloads/COVID_Pats1a.csv",header = TRUE, stringsAsFactors = TRUE)
+
+Pat_Comorb = read.csv("C:/Users/Administrator/Downloads/COVID_Comorb1.csv",header = TRUE, stringsAsFactors = TRUE)
+
+    ```
+The summary views of the two data sets that were imported into two data frames were shown below:
+    ```{r eval = TRUE}
+    str(Pat_Demo)
+    str(Pat_Demo)
+    ```
+
+The two extracted data frames were then merged into a single data frame which was used for further analyses and the summary view of the final data set was shown below.
 
 
 ```{r eval = TRUE}
-  library(dplyr)
-  library(ggplot2)
-
-####   PART I ######################
-#Data read from CSV files
-Pat_Demo = read.csv("C:/Users/Administrator/Downloads/COVID_Pats1.csv",header = TRUE, stringsAsFactors = TRUE)
-
-Pat_Comorb = read.csv("C:/Users/Administrator/Downloads/COVID_Comorb1.csv",header = TRUE, stringsAsFactors = TRUE)
-                      
-str(Pat_Demo)
-str(Pat_Comorb)
-
 # Merged Data Set
-Pat_Merged_Data <- merge(Pat_Demo, Pat_Comorb)
+    Pat_Merged_Data <- merge(Pat_Demo, Pat_Comorb)
+    str(Pat_Merged_Data)
 
+```
+Some of the variable names were re-named in the final data set and the summary view is shown below:
+
+
+```{r eval = TRUE}
 #Creating a new data set for analysis
 COVID.clean <- Pat_Merged_Data %>% 
-        dplyr::select(Age,Race,Gender,Ethnicity,Smoking_Status,LOS,ICU_Dept_YN,Ventilator_YN,Category,Deceased_Status,
-        HF,HTN,Diabetes,Angina,Hyperlipidemia,Stroke,COPD,CKD,Obesity,Asthma) %>%
-        rename(age = Age,race = Race,gender= Gender,ethnicity = Ethnicity,smoking.status = Smoking_Status,category = Category,
-            deceased.status = Deceased_Status,length.of.stay = LOS, icu=ICU_Dept_YN, ventilator = Ventilator_YN) %>%   
-        filter(!category  %in% c("Ruled Out"))# %>% 
-        #filter(!race  %in% c("Other","Unknown","Patient Declined")) %>% 
-       # filter(smoking.status != 'Not Asked') 
-
+        dplyr::select(Age,Race,Gender,Smoking_Status,ICU_Dept_YN,Ventilator_YN,Category,Deceased_Status,
+        Obesity) %>%
+        rename(age = Age,race = Race,gender= Gender,smoking.status = Smoking_Status,category = Category,
+            deceased.status = Deceased_Status, icu=ICU_Dept_YN, ventilator = Ventilator_YN, obesity = Obesity)  
+   
   str(COVID.clean)
 
-  # Total Patient Population in the data set
-  Total_Pat_counts <- COVID.clean%>% 
-  summarize(count = n())
+```
+In addition to Yes/No, the smoking status variable also contains information such as 'Not Asked", so a new data set was created of patients who answered Yes/No to evaulate the effects of smoking on the outcomes.
 
-  Total_Pat_counts
+```{r eval = TRUE}
+  #Data set for smoking Yes/No
+    smoking_set <- COVID.clean %>% 
+    filter(smoking.status == 'Y' | smoking.status == 'N')
+```   
+    
+The contents of age variable is described as mean(sd)and for other variables, it was described as the percentage of 
+the yes values of the Boolean variables (Male, Black, Obese, Tobacco exposure, ICU admission, Ventilator use 
+and Mortality) respectively.
 
-## Patient Population by race
-  Pat_counts <- COVID.clean%>% 
-  group_by(race) %>%
-  summarize(count = n())
-
-  Pat_counts
-
-  ## Since there were not many patients of other race, I am taking only White and Black population for 
-  # race analysis
-race_wb <- COVID.clean %>% 
-  filter(race == 'White' | race == 'Black')
-
-#Data set for smoking Yes/No
-smoking_set <- COVID.clean %>% 
-  filter(smoking.status == 'Yes' | smoking.status == 'No')
- 
-######### EnD PART I ##################
-
-### PART II Univariate Analysis ###################
-
-# Comparing each selected predictor variable to selected outcome variable
-  # ********
-  # Predictor variables: age, race, gender, Asthma, Obesity, Diabetes, Hypertension, COPD
-  # Outcome variables: ICU, Ventilator, Decease Status
-  
-# ******** ICU
-   #For outcome ICU versus predictor age
-    ggplot(COVID.clean, aes(x = icu, y = age)) +
-        geom_boxplot()
-    summary(glm(icu ~ age, data = COVID.clean, family = "binomial"))
-    chisq.test(table(COVID.clean$icu, COVID.clean$age))
-    
-  #For outcome ICU versus predictor Race
-    ggplot(race_wb, aes(x = icu, fill = race)) +
-        geom_bar(position = "dodge")
-    
-    model_r <- glm(formula= icu ~ race, data=race_wb, family=binomial)
-    summary(model_r)
-    chisq.test(table(race_wb$icu, race_wb$race))
-    
-    testdatayes_rw <- data.frame(race="White")
-    predict(model_r,testdatayes_rw, type="response")
-    
-    testdatayes_rb =  data.frame(race="Black")
-    predict(model_r, testdatayes_rb, type="response")
-    
-  #For outcome ICU versus predictor Gender
-    ggplot(COVID.clean, aes(x = icu, fill = gender)) +
-        geom_bar(position = "dodge")
-    
-    model_g <- glm(formula= icu ~ gender, data=COVID.clean, family=binomial)
-    summary(model_g)
-    chisq.test(table(COVID.clean$icu, COVID.clean$gender))
-    
-    testdatayes_gm <- data.frame(gender="Male")
-    predict(model_g,testdatayes_gm, type="response")
-    
-    testdatayes_gf =  data.frame(gender="Female")
-    predict(model_g, testdatayes_gf, type="response")
-    
-    #For outcome ICU versus predictor smoking status
-    ggplot(smoking_set, aes(x = icu, fill = smoking.status)) +
-        geom_bar(position = "dodge")
-    
-    model_smo <- glm(formula= icu ~ smoking.status, data=smoking_set, family=binomial)
-    summary(model_smo)
-    chisq.test(table(smoking_set$icu, smoking_set$smoking.status))
-    
-    testdatayes_smo <- data.frame(smoking.status="Yes")
-    predict(model_smo,testdatayes_smo, type="response")
-    
-    testdatano_smo =  data.frame(smoking.status="No")
-    predict(model_smo, testdatano_smo, type="response")
-    
-     #For outcome ICU versus predictor Obesity
-    ggplot(COVID.clean, aes(x = icu, fill = Obesity)) +
-        geom_bar(position = "dodge")
-    
-    model <- glm(formula= icu ~ Obesity, data=COVID.clean, family=binomial)
-    summary(model)
-    chisq.test(table(COVID.clean$icu, COVID.clean$Obesity))
-    
-    testdatayes <- data.frame(Obesity="Y")
-    predict(model,testdatayes, type="response")
-    
-    testdatano =  data.frame(Obesity="N")
-    predict(model, testdatano, type="response")
-    
-# End ICU
-    
-# ******** Ventilator
-   #For outcome ventilator versus predictor age
-    ggplot(COVID.clean, aes(x = ventilator, y = age)) +
-        geom_boxplot()
-    summary(glm(ventilator ~ age, data = COVID.clean, family = "binomial"))
-    chisq.test(table(COVID.clean$ventilator, COVID.clean$age))
-    
-  #For outcome ventilator versus predictor Race
-    ggplot(race_wb, aes(x = ventilator, fill = race)) +
-        geom_bar(position = "dodge")
-    
-    model_r <- glm(formula= ventilator ~ race, data=race_wb, family=binomial)
-    summary(model_r)
-    chisq.test(table(race_wb$ventilator, race_wb$race))
-    
-    testdatayes_rw <- data.frame(race="White")
-    predict(model_r,testdatayes_rw, type="response")
-    
-    testdatayes_rb =  data.frame(race="Black")
-    predict(model_r, testdatayes_rb, type="response")
-    
-  #For outcome ventilator versus predictor Gender
-    ggplot(COVID.clean, aes(x = ventilator, fill = gender)) +
-        geom_bar(position = "dodge")
-    
-    model_g <- glm(formula= ventilator ~ gender, data=COVID.clean, family=binomial)
-    summary(model_g)
-    chisq.test(table(COVID.clean$ventilator, COVID.clean$gender))
-    
-    testdatayes_gm <- data.frame(gender="Male")
-    predict(model_g,testdatayes_gm, type="response")
-    
-    testdatayes_gf =  data.frame(gender="Female")
-    predict(model_g, testdatayes_gf, type="response")
-    
-    #For outcome ventilator versus predictor smoking status
-    ggplot(smoking_set, aes(x = ventilator, fill = smoking.status)) +
-        geom_bar(position = "dodge")
-    
-    model_smo <- glm(formula= ventilator ~ smoking.status, data=smoking_set, family=binomial)
-    summary(model_smo)
-    chisq.test(table(smoking_set$ventilator, smoking_set$smoking.status))
-    
-    testdatayes_smo <- data.frame(smoking.status="Yes")
-    predict(model_smo,testdatayes_smo, type="response")
-    
-    testdatano_smo =  data.frame(smoking.status="No")
-    predict(model_smo, testdatano_smo, type="response")
-    
-     #For outcome ventilator versus predictor Obesity
-    ggplot(COVID.clean, aes(x = ventilator, fill = Obesity)) +
-        geom_bar(position = "dodge")
-    
-    model <- glm(formula= ventilator ~ Obesity, data=COVID.clean, family=binomial)
-    summary(model)
-    chisq.test(table(COVID.clean$ventilator, COVID.clean$Obesity))
-    
-    testdatayes <- data.frame(Obesity="Y")
-    predict(model,testdatayes, type="response")
-    
-    testdatano =  data.frame(Obesity="N")
-    predict(model, testdatano, type="response")
-    
-# End ventilator
-    
-# ******** deceased.status
-   #For outcome deceased.status versus predictor age
-    ggplot(COVID.clean, aes(x = deceased.status, y = age)) +
-        geom_boxplot()
-    summary(glm(deceased.status ~ age, data = COVID.clean, family = "binomial"))
-    chisq.test(table(COVID.clean$deceased.status, COVID.clean$age))
-    
-  #For outcome deceased.status versus predictor Race
-    ggplot(race_wb, aes(x = deceased.status, fill = race)) +
-        geom_bar(position = "dodge")
-    
-    model_r <- glm(formula= deceased.status ~ race, data=race_wb, family=binomial)
-    summary(model_r)
-    chisq.test(table(race_wb$deceased.status, race_wb$race))
-    
-    testdatayes_rw <- data.frame(race="White")
-    predict(model_r,testdatayes_rw, type="response")
-    
-    testdatayes_rb =  data.frame(race="Black")
-    predict(model_r, testdatayes_rb, type="response")
-    
-  #For outcome deceased.status versus predictor Gender
-    ggplot(COVID.clean, aes(x = deceased.status, fill = gender)) +
-        geom_bar(position = "dodge")
-    
-    model_g <- glm(formula= deceased.status ~ gender, data=COVID.clean, family=binomial)
-    summary(model_g)
-    chisq.test(table(COVID.clean$deceased.status, COVID.clean$gender))
-    
-    testdatayes_gm <- data.frame(gender="Male")
-    predict(model_g,testdatayes_gm, type="response")
-    
-    testdatayes_gf =  data.frame(gender="Female")
-    predict(model_g, testdatayes_gf, type="response")
-    
-    #For outcome deceased.status versus predictor smoking status
-    ggplot(smoking_set, aes(x = deceased.status, fill = smoking.status)) +
-        geom_bar(position = "dodge")
-    
-    model_smo <- glm(formula= deceased.status ~ smoking.status, data=smoking_set, family=binomial)
-    summary(model_smo)
-    chisq.test(table(smoking_set$deceased.status, smoking_set$smoking.status))
-    
-    testdatayes_smo <- data.frame(smoking.status="Yes")
-    predict(model_smo,testdatayes_smo, type="response")
-    
-    testdatano_smo =  data.frame(smoking.status="No")
-    predict(model_smo, testdatano_smo, type="response")
-    
-     #For outcome deceased.status versus predictor Obesity
-    ggplot(COVID.clean, aes(x = deceased.status, fill = Obesity)) +
-        geom_bar(position = "dodge")
-    
-    model <- glm(formula= deceased.status ~ Obesity, data=COVID.clean, family=binomial)
-    summary(model)
-    chisq.test(table(COVID.clean$deceased.status, COVID.clean$Obesity))
-    
-    testdatayes <- data.frame(Obesity="Y")
-    predict(model,testdatayes, type="response")
-    
-    testdatano =  data.frame(Obesity="N")
-    predict(model, testdatano, type="response")
-    
-# End deceased.status
-    
-# END PART II Univariate Analysis
-    
-
-## group COVID patients by Race and Deceased status
-Cat_counts <- COVID.clean %>% 
-  filter(race == 'White' | race == 'Black') %>%
-  group_by(race,deceased.status) %>%
-  summarize(count = n())
-
-ggplot(data = Cat_counts, aes(x = race, y = count, fill = deceased.status)) +
-  ggtitle("Deceased Status and Race") +
-  geom_bar(stat = 'identity')
-
-##mean average length of stay based on race
-Avg_LOS <-COVID.clean  %>% 
-  filter(category == 'Confirmed' & race  %in% c("East Indian", "White", "Asian", "Black","HLW-Hispanic Latino/White", 
-                      "HLB-Hispanic Latino/Black", "American Indian","Pacific Island ")) %>%
-  group_by(race) %>% 
-  summarize(AvG_Length_of_Stay = mean(as.numeric(length.of.stay), na.rm=TRUE), counts = n()) %>%
-  arrange(desc(AvG_Length_of_Stay))
-
-  Avg_LOS
-
-#average length of stay of patients by race
-theme_set(theme_bw())
-ggplot(Avg_LOS, aes(x = race, y = AvG_Length_of_Stay)) + 
-  geom_bar(stat="identity", width=.5, fill="tomato3") + 
-  labs(title="Average length of stay by race", 
-       subtitle="Race Vs LOS", 
-       caption="Avg LOS") + 
-  theme(axis.text.x = element_text(angle=65, vjust=0.6))
-
-
-
-#Multivariable regression models for Length of Stay, ICU, Ventilator and Decease Status
-
-los.glm <- glm(length.of.stay ~ as.numeric(age) + gender + race + smoking.status + HF + HTN + Diabetes +
-              +Angina + Stroke + COPD + CKD + Obesity + Asthma,data = COVID.clean, family = "binomial")
-          summary(los.glm)
-
-
-icu.glm <- glm(icu ~ as.numeric(age) +  gender + race + smoking.status + HF + HTN + Diabetes +
-              +Angina + Stroke + COPD + CKD + Obesity + Asthma,data = COVID.clean, family = "binomial")
-          summary(icu.glm)
-
-ventilator.glm <- glm(ventilator ~ as.numeric(age) + gender + race + smoking.status + HF + HTN + Diabetes +
-              +Angina + Stroke + COPD + CKD + Obesity + Asthma,data = COVID.clean,family = "binomial")
-            summary(ventilator.glm)
-
-deceased.glm <- glm(deceased.status ~ as.numeric(age) + gender + race + smoking.status + HF + HTN + Diabetes +
-              +Angina + Stroke + COPD + CKD + Obesity + Asthma,data = COVID.clean,family = "binomial")
-            summary(deceased.glm)
-
-
-
-#Logistic regression
-
-#find out top variables that are significant based on regression model
-decease.glm <- glm(deceased.status ~ as.numeric(age) + gender + race + smoking.status + HF + HTN + Diabetes +
-              +Angina + Stroke + COPD + CKD + Obesity + Asthma + ventilator + icu,data = COVID.clean,family = binomial(logit))
-summary(decease.glm)
-
-#Logistic regression
-#obtained top variables from above step
-a4.top.glm <- glm(deceased.status ~ as.numeric(age) +smoking.status + HTN + CKD + Obesity + ventilator + icu, data = COVID.clean, 
-                  family = binomial(logit))
-summary(a4.top.glm)
-
-
-glm.top.pred <- predict(a4.top.glm, COVID.clean, type = "response")
-
-#Random Forest
-library(randomForest)
-rf.top <- randomForest(deceased.status ~ smoking.status + HTN + CKD + Obesity + ventilator + icu, data = COVID.clean, 
-                       ntree = 100, importance = TRUE)
-rf.top
-
-rf.top$importance
-
-rf.top.pred <- predict(rf.top, COVID.clean, type = "prob")
-
-#10-fold cross-validation
-N = nrow(COVID.clean)
-K = 10
-set.seed(1234)
-s = sample(1:K, size = N, replace = T)
-pred_outputs.glm <- vector(mode = "numeric", length = N)
-pred_outputs.rf <- vector(mode = "numeric", length = N)
-obs_outputs <- vector(mode = "numeric", length = N)
-offset <- 0
-for(i in 1:K){
-    train <- filter(COVID.clean, s != i)
-    test <- filter(COVID.clean, s == i)
-    obs_outputs[1:length(s[s == i]) + offset] <- test$deceased.status
-    #GLM train/test
-    glm <- glm(deceased.status ~ smoking.status + HTN + CKD + Obesity + ventilator + icu, data = train, family = binomial(logit))
-    glm.pred.curr <- predict(glm, test, type = "response")
-    pred_outputs.glm[1:length(s[s == i]) + offset] <- glm.pred.curr
-
-    #RF train/test
-    rf <- randomForest(deceased.status ~ smoking.status + HTN + CKD + Obesity + ventilator + icu, data = train, ntree = 100)
-    rf.pred.curr <- predict(rf, newdata = test, type = "prob") 
-    pred_outputs.rf[1:length(s[s == i]) + offset] <- rf.pred.curr[ , 2]
-
-    offset <- offset + length(s[s == i])
-}
-
-#ROC Curves
-library(pROC)
-plot.roc(COVID.clean$deceased.status, glm.top.pred, ci = TRUE, main = "Using Top-Ranked Variables") 
-plot.roc(obs_outputs, pred_outputs.glm, ci = TRUE, col = "darkblue", add = TRUE) 
-plot.roc(COVID.clean$deceased.status, rf.top.pred[, 2], ci = TRUE, col = "darkgreen", add = TRUE)
-
-plot.roc(obs_outputs, pred_outputs.rf, ci = TRUE, col = "red", add = TRUE) 
-legend("bottomright", legend = c("GLM Training", "GLM Cross-Validation", "RF Training", "RF Cross-Validation"), col = c("black", "darkblue", "darkgreen", "red"), lwd = 2)
-
-auc(COVID.clean$deceased.status, glm.top.pred)
-
-auc(obs_outputs, pred_outputs.glm)
-
-auc(COVID.clean$deceased.status, rf.top.pred[ , 2])
-
-auc(obs_outputs, pred_outputs.rf)
-``` 
-
-
+The logistic regression to model the outcome variables of ICU admission, Ventilator use and Deceased Status were used
+since these outcomes are Boolean. Each of the predictor (independent) variables are either numeric (age) or Boolean 
+(all the others). Initially, univariate models for each of the outcome variables were constructed to look for significant relationship. A multivariate model for each outcome variable containing all independent variables which were significant to the level of P<0.10 in univariate models were generated for further analyses.
 
 ### Results
-Describe your results and include relevant tables, plots, and code/comments used to obtain them. End with a brief conclusion of your findings related to the question you set out to address. You can include references if you'd like, but this is not required.
+There were 3712 confirmed COVID patients in the cohort with a mean age of 55 and out of which 44% were male and 66% were African Americans as shown below. The majority of patients were admitted to non-ICU (90%) without a ventilator (90%) and only 12% of patients were admitted to the ICU.
+```{r eval = TRUE}
+  
+  # make dataset with a few variables to summarize
+  Pat_char <- COVID.clean %>% select(age, race, gender, obesity,smoking.status,icu,ventilator,deceased.status)
+
+  # summarize the data
+  Pat_char_Table <- tbl_summary(Pat_char)
+  Pat_char_Table
+```
+A box-plot graph has been created to show the relationship between ICU admission and age and it is quite evident that there was correlation exists between age and ICU admission.
+```{r eval = TRUE}
+#For outcome ICU versus predictor age
+    ggplot(COVID.clean, aes(x = icu, y = age)) +
+        geom_boxplot()
+    
+```    
+### Chi-Square anaysis and contingency tables
+
+The chi-square analysis for ICU and gender shows a greater exists between the variables studied with a chi-square value of 7.139 with a highly significant p-value of 0.008 as shown below.
+```{r eval = TRUE}
+  #ICU
+  # print minimal cross table with labels, total col/row highlighted
+  sjt.xtab(COVID.clean$icu, COVID.clean$gender, show.cell.prc = FALSE, emph.total = TRUE)
+
+```
+A similar association exists among ICU and race and obesity with chi-square values of 2.793, 15.654  and with p-value of less than or equal to 0.09 respectively as shown in the following contingency tables. For smoking status, Fisher's p-value was 0.002.
+
+```{r eval = TRUE}
+  #ICU
+  sjt.xtab(COVID.clean$icu, COVID.clean$race, show.cell.prc = FALSE, emph.total = TRUE)
+  sjt.xtab(COVID.clean$icu, COVID.clean$obesity, show.cell.prc = FALSE, emph.total = TRUE)
+  sjt.xtab(smoking_set$icu, smoking_set$smoking.status, show.cell.prc = FALSE, emph.total = TRUE)
+```
+The same analysis for ventilator against gender, race, obesity and smoking status were done and it reveals except race all the three remaining variables have a greater and significant association with the ventilator use (p<0.08). The p-value for race was 0.404 as shown below:
+
+```{r eval = TRUE}
+ #Ventilator
+    # print minimal cross table with labels, total col/row highlighted
+  sjt.xtab(COVID.clean$ventilator, COVID.clean$gender, show.cell.prc = FALSE, emph.total = TRUE)
+  sjt.xtab(COVID.clean$ventilator, COVID.clean$race, show.cell.prc = FALSE, emph.total = TRUE)
+  sjt.xtab(COVID.clean$ventilator, COVID.clean$obesity, show.cell.prc = FALSE, emph.total = TRUE)
+  sjt.xtab(smoking_set$ventilator, smoking_set$smoking.status, show.cell.prc = FALSE, emph.total = TRUE)
+```
+In contrast, the chi-squre analysis on decease status against gender, race, obesity and smoking.status shows that only race and smoking status showed an association exist between the observed and expected as shown in the tables below.
+
+```{r eval = TRUE}     
+#deceased.status
+    # print minimal cross table with labels, total col/row highlighted
+  sjt.xtab(COVID.clean$deceased.status, COVID.clean$gender, show.cell.prc = FALSE, emph.total = TRUE)
+  sjt.xtab(COVID.clean$deceased.status, COVID.clean$race, show.cell.prc = FALSE, emph.total = TRUE)
+  sjt.xtab(COVID.clean$deceased.status, COVID.clean$obesity, show.cell.prc = FALSE, emph.total = TRUE)
+  sjt.xtab(smoking_set$deceased.status, smoking_set$smoking.status, show.cell.prc = FALSE, emph.total = TRUE)
+```
+### Univariate Analyses:
+
+The univariate anyalysis of each predictor variable against the each outcome variable has been shown in the following tables. For ICU against age, the p-values for intercept and age were less than 0.001 showing they were very significant. 
+
+```{r eval = TRUE}
+model_age_i <- glm(formula= icu ~ age, data=COVID.clean, family=binomial)
+    tab_model(model_age_i)
+
+```
+The univariate analysis for ICU against race,gender, obesity and smoking status were also significant meeting the threshold values (p<0.10). The p-values for race, gender, obesity and smoking status were 0.085, 0.007, 0.001 and 0.001 respectively.
+
+```{r eval = TRUE}
+
+    model_r_i <- glm(formula= icu ~ race, data=COVID.clean, family=binomial)
+    tab_model(model_r_i)
+
+    model_g_i <- glm(formula= icu ~ gender, data=COVID.clean, family=binomial)
+     tab_model(model_g_i)
+     
+    model_o_i <- glm(formula= icu ~ obesity, data=COVID.clean, family=binomial)
+     tab_model(model_o_i)
+     
+     model_smo_i <- glm(formula= icu ~ smoking.status, data=smoking_set, family=binomial)
+     tab_model(model_smo_i)
+
+```
+Unlike ICU, the univariate analysis for ventilator against each predictor variables, except race, all the other varaiables (age,gender, smoking status and obesity) were significant. The p-value for race was 0.372 though the intercept was highly significant (p<0.001). The univariate analysis data for ventilator against the each predictor were shown below.
+
+```{r eval = TRUE}
+
+     model_v_age <- glm(formula= ventilator ~ age, data=COVID.clean, family=binomial)
+     tab_model(model_v_age)
+     
+      model_r_v <- glm(formula= ventilator ~ race, data=COVID.clean, family=binomial)
+     tab_model(model_r_v)
+     
+      model_g_v <- glm(formula= ventilator ~ gender, data=COVID.clean, family=binomial)
+      tab_model(model_g_v)
+      
+      model_smo_v <- glm(formula= ventilator ~ smoking.status, data=smoking_set, family=binomial)
+      tab_model(model_smo_v)
+     
+      model_o_v <- glm(formula= ventilator ~ obesity, data=COVID.clean, family=binomial)
+      tab_model(model_o_v)
+     
+```
+The univariate analysis for decease status against the predicitor varaibles have shown that gender and obesity were not significant where as age, smoking status and were highly significant as shown below. The p-values for gender and obesity were 0.227 and 0.264 whereas for age, race and smoking status they were <0.001 respectively.
+
+```{r eval = TRUE}
+
+    model_d_age <- glm(formula= deceased.status ~ age, data=COVID.clean, family=binomial)
+     tab_model(model_d_age)
+     
+    model_d_r <- glm(formula= deceased.status ~ race, data=COVID.clean, family=binomial)
+    tab_model(model_d_r)
+    
+    model_d_g <- glm(formula= deceased.status ~ gender, data=COVID.clean, family=binomial)
+     tab_model(model_d_g)
+     
+    model_d_smo <- glm(formula= deceased.status ~ smoking.status, data=smoking_set, family=binomial)
+    tab_model(model_d_smo)
+    
+    model_d_o <- glm(formula= deceased.status ~ obesity, data=COVID.clean, family=binomial)
+    tab_model(model_d_o)
+    
+     
+```
+The independent variables with p-values <.01 were used to develop the multivariate models for ICU, ventilator and deceased status. For ICU admission multivariate model, I have used age, gender, smoking status and obesity. The predictor variables age, gender and obesity were significant with a p-values of less than equal to 0.002 as shown below. The predicted probability of being in an ICU for a patient with age of 75, male, smoking, obesity and race white was 28%.
+
+```{r eval = TRUE}
+icu.glm <- glm(icu ~ as.numeric(age) +  gender +race + smoking.status +  obesity,data = smoking_set, family = "binomial")
+           tab_model(icu.glm)
+           
+    newdata = data.frame(age = 75,gender = "Male",smoking.status = "Y", race = "White", obesity = "Y")
+    predict(icu.glm, newdata, type="response")
+```
+For multivariate ventilator model,age,gender,smoking status and obesity were used to generate the model. The p-values for the multivariates were shown in the table. The variables age, gender and obesity were significant at p<0.001. The predicted probability of having a ventilator use for a patient with age of 75, male, smoking, obesity and race white was 24%.
+
+```{r eval = TRUE}
+  ventilator.glm <- glm(ventilator ~ as.numeric(age) + gender + smoking.status + obesity,data = smoking_set,family = "binomial")
+             tab_model(ventilator.glm)
+             
+      newdata = data.frame(age = 75,gender = "Male",smoking.status = "Y", obesity = "Y")
+      predict(ventilator.glm, newdata, type="response")
+```
+The variables age and race were significant with p-values of <0.001 and 0.021 for deceased status model as shown below. The predicted probability of death for a patient with age of 75,smoking and race white was 21%.
+
+```{r eval = TRUE}
+  deceased.glm <- glm(deceased.status ~ as.numeric(age) + race + smoking.status,data = smoking_set,family = "binomial")
+             tab_model(deceased.glm)
+             
+    newdata = data.frame(age = 75,smoking.status = "Y", race = "White")
+    predict(deceased.glm, newdata, type="response")
+```
+As noted above, a logistic regression model was created for each outcome variable (ICU, ventilator and decease status)using the predictor varaibles with a p-value <0.1. An ROC curve was plotted for each of the true outcomes (each of the 3) versus the multivariate outcomes (sensitivity vs specificity) with the calculation of AUROC and predictive accuracy using the training data as well as via 10-fold cross-validation.
+
+The ROC curve plot for decease status (multivariate model) is shown below and AUROC was 0.808 on training data and 0.805 on 10-fold cross-validation respectively. 
+
+```{r eval = TRUE}
+ 
+    #FOR dECEASED
+    #Logistic regression
+    glm.top.pred <- predict(deceased.glm, smoking_set, type = "response")
+    #10-fold cross-validation
+    N = nrow(smoking_set)
+    K = 10
+    set.seed(1234)
+    s = sample(1:K, size = N, replace = T)
+    pred_outputs.glm <- vector(mode = "numeric", length = N)
+    #pred_outputs.rf <- vector(mode = "numeric", length = N)
+    obs_outputs <- vector(mode = "numeric", length = N)
+    offset <- 0
+    for(i in 1:K){
+        train <- filter(smoking_set, s != i)
+        test <- filter(smoking_set, s == i)
+        obs_outputs[1:length(s[s == i]) + offset] <- test$deceased.status
+        #GLM train/test
+        glm <- glm(deceased.status ~ age +smoking.status + race, data = train, family = binomial(logit))
+        glm.pred.curr <- predict(glm, test, type = "response")
+        pred_outputs.glm[1:length(s[s == i]) + offset] <- glm.pred.curr
+    
+        offset <- offset + length(s[s == i])
+    }
+    
+    #ROC Curves
+    library(pROC)
+    plot.roc(smoking_set$deceased.status, glm.top.pred, ci = TRUE, main = "Decease Status Outcome") 
+    plot.roc(obs_outputs, pred_outputs.glm, ci = TRUE, col = "darkblue", add = TRUE) 
+    legend("bottomright", legend = c("GLM Training", "GLM Cross-Validation"), col = c("black", "darkblue"), lwd = 2)
+    
+    auc(smoking_set$deceased.status, glm.top.pred)
+    auc(obs_outputs, pred_outputs.glm)
+```
+The ROC curve plot for ventilator use (multivariate model) is shown below and AUROC was 0.652 on training data and 0.653 on 10-fold cross-validation respectively. 
+
+```{r eval = TRUE}
+       
+      #FOR Ventilator
+      #Logistic regression
+      glm.top.pred <- predict(ventilator.glm, smoking_set, type = "response")
+      #10-fold cross-validation
+      N = nrow(COVID.clean)
+      K = 10
+      set.seed(1234)
+      s = sample(1:K, size = N, replace = T)
+      pred_outputs.glm <- vector(mode = "numeric", length = N)
+      obs_outputs <- vector(mode = "numeric", length = N)
+      offset <- 0
+      for(i in 1:K){
+          train <- filter(COVID.clean, s != i)
+          test <- filter(COVID.clean, s == i)
+          obs_outputs[1:length(s[s == i]) + offset] <- test$ventilator
+          #GLM train/test
+          glm <- glm(ventilator ~ age +gender + obesity, data = train, family = binomial(logit))
+          glm.pred.curr <- predict(glm, test, type = "response")
+          pred_outputs.glm[1:length(s[s == i]) + offset] <- glm.pred.curr
+      
+          offset <- offset + length(s[s == i])
+      }
+      
+      #ROC Curves
+      library(pROC)
+      plot.roc(smoking_set$ventilator, glm.top.pred, ci = TRUE, main = "Ventilator Outcome") 
+      plot.roc(obs_outputs, pred_outputs.glm, ci = TRUE, col = "darkblue", add = TRUE) 
+      legend("bottomright", legend = c("GLM Training", "GLM Cross-Validation"), col = c("black", "darkblue"), lwd = 2)
+      
+      auc(smoking_set$ventilator, glm.top.pred)
+      auc(obs_outputs, pred_outputs.glm)
+```
+The ROC curve plot for ICU admission (multivariate model) is shown below and AUROC was 0.625 on training data and 0.638 on 10-fold cross-validation respectively. 
+
+```{r eval = TRUE}     
+      #FOR ICU
+      #Logistic regression
+      glm.top.pred <- predict(icu.glm , smoking_set, type = "response")
+      #10-fold cross-validation
+      N = nrow(COVID.clean)
+      K = 10
+      set.seed(1234)
+      s = sample(1:K, size = N, replace = T)
+      pred_outputs.glm <- vector(mode = "numeric", length = N)
+      #pred_outputs.rf <- vector(mode = "numeric", length = N)
+      obs_outputs <- vector(mode = "numeric", length = N)
+      offset <- 0
+      for(i in 1:K){
+          train <- filter(COVID.clean, s != i)
+          test <- filter(COVID.clean, s == i)
+          obs_outputs[1:length(s[s == i]) + offset] <- test$icu
+          #GLM train/test
+          glm <- glm(ventilator ~ age +gender + obesity, data = train, family = binomial(logit))
+          glm.pred.curr <- predict(glm, test, type = "response")
+          pred_outputs.glm[1:length(s[s == i]) + offset] <- glm.pred.curr
+      
+          offset <- offset + length(s[s == i])
+      }
+      
+      #ROC Curves
+      library(pROC)
+      plot.roc(smoking_set$ventilator, glm.top.pred, ci = TRUE, main = "ICU Outcome") 
+      plot.roc(obs_outputs, pred_outputs.glm, ci = TRUE, col = "darkblue", add = TRUE) 
+      legend("bottomright", legend = c("GLM Training", "GLM Cross-Validation"), col = c("black", "darkblue"), lwd = 2)
+      
+      auc(smoking_set$icu, glm.top.pred)
+      auc(obs_outputs, pred_outputs.glm)
+``` 
+Conclusion: Overall, this project has provided some meaningful insights showing a relationship between patient characterstics and the COVID outcomes. The univariate analysis revealed that for ICU admission,ventilator use and mortality, the varaibles such as age, gender, smoking history and obesity have an association to predcict the outcomes. 
+
+Conclusion not done.
+
+### About Peer feedback:
+
+I agree somewhat with the first-round peers suggestions but with the data set I have, there are limitations.The basic aim and scope of this project is to see whether selective patient characteristics and selected comorbidities have had any impact on patients being on Ventilator  or in ICU and any effects on mortality.
+
+I do not have data on the admission and discharge times nor plans to see the extend care after discharge and as it is beyond the scope of this project.I have only very limited data points and that to they are discrete values of Yes/No. 
+
+The second report feedback suggestions were taken into consideration the race_wb issue was fixed. The socio-economic status variable was not available for us to add it to the analyses. Comments were added in the rmd file at the appropriate places and the sections were labelled properly.
+
+
+
+
+
+
+
+
+
+ 
+
+

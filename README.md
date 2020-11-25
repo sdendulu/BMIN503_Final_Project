@@ -10,6 +10,7 @@ Patient Characteristics and racial disparities in determining clinical outcomes 
 * [Features](#features)
 * [Status](#status)
 * [Inspiration](#inspiration)
+* [Files in the Repository](#Repository)
 
 
 ## General info
@@ -53,7 +54,6 @@ summary(decease.glm)
 ## Features
 The project has cool features to determine the clinical outcomes such as:
 * Logistic Regression Models
-* Random Forest
 * ROC Curves
 
 To-do list:
@@ -65,5 +65,11 @@ Project is done and ready to submit
 
 ## Inspiration
 I have taken this project because of its current importance.
+
+## Repository
+There were only 3 main files in the repository:
+* Final_project_template.rmd
+* Final_project_template.html
+* README.md
 
 
