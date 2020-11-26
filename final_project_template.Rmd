@@ -104,7 +104,7 @@ COVID.clean <- Pat_Merged_Data %>%
             deceased.status = Deceased_Status, icu=ICU_Dept_YN, ventilator = Ventilator_YN, obesity = Obesity)  
    
   str(COVID.clean)
-
+  
 ```
 In addition to Yes/No, the smoking status variable also contains information such as 'Not Asked", so a new data set was created of patients who answered Yes/No to evaulate the effects of smoking on the outcomes.
 
@@ -133,12 +133,32 @@ There were 3712 confirmed COVID patients in the cohort with a mean age of 55 and
   Pat_char_Table <- tbl_summary(Pat_char)
   Pat_char_Table
 ```
+The average patient age of the cohort based on the race was shown below. The average age among white population was 60 and within African population, the average age was 50 respectively.
+```{r eval = TRUE}
+    ##mean patient age based on race
+  Avg_age <-COVID.clean  %>% 
+  group_by(race) %>% 
+  summarize(AvG_Pat_Age = mean(as.numeric(age), na.rm=TRUE), counts = n()) %>%
+  arrange(desc(AvG_Pat_Age))
+
+    #average length of stay of patients by race
+    theme_set(theme_bw())
+    ggplot(Avg_age, aes(x = race, y = AvG_Pat_Age)) + 
+      geom_bar(stat="identity", width=.5, fill="tomato3") + 
+      labs(title="Average Patient age by race", 
+           subtitle="Race Vs Age", 
+           caption="Avg age") + 
+      theme(axis.text.x = element_text(angle=65, vjust=0.6))
+
+
+``` 
 A box-plot graph has been created to show the relationship between ICU admission and age and it is quite evident that there was correlation exists between age and ICU admission.
 ```{r eval = TRUE}
 #For outcome ICU versus predictor age
     ggplot(COVID.clean, aes(x = icu, y = age)) +
         geom_boxplot()
-    
+
+  
 ```    
 ### Chi-Square anaysis and contingency tables
 
@@ -273,118 +293,199 @@ The variables age and race were significant with p-values of <0.001 and 0.021 fo
 ```
 As noted above, a logistic regression model was created for each outcome variable (ICU, ventilator and decease status)using the predictor varaibles with a p-value <0.1. An ROC curve was plotted for each of the true outcomes (each of the 3) versus the multivariate outcomes (sensitivity vs specificity) with the calculation of AUROC and predictive accuracy using the training data as well as via 10-fold cross-validation.
 
-The ROC curve plot for decease status (multivariate model) is shown below and AUROC was 0.808 on training data and 0.805 on 10-fold cross-validation respectively. 
+As shown below, the AOC for decease status (mortality) logistic regression model on training data and on 10-fold cross-validation was 0.80 for age, gender and obesity variables where the AOC for RF on training data was 0.70 and on 10-fold cross-validation it was 0.65 respectively.
 
 ```{r eval = TRUE}
  
     #FOR dECEASED
     #Logistic regression
-    glm.top.pred <- predict(deceased.glm, smoking_set, type = "response")
-    #10-fold cross-validation
-    N = nrow(smoking_set)
-    K = 10
-    set.seed(1234)
-    s = sample(1:K, size = N, replace = T)
-    pred_outputs.glm <- vector(mode = "numeric", length = N)
-    #pred_outputs.rf <- vector(mode = "numeric", length = N)
-    obs_outputs <- vector(mode = "numeric", length = N)
-    offset <- 0
-    for(i in 1:K){
-        train <- filter(smoking_set, s != i)
-        test <- filter(smoking_set, s == i)
-        obs_outputs[1:length(s[s == i]) + offset] <- test$deceased.status
-        #GLM train/test
-        glm <- glm(deceased.status ~ age +smoking.status + race, data = train, family = binomial(logit))
-        glm.pred.curr <- predict(glm, test, type = "response")
-        pred_outputs.glm[1:length(s[s == i]) + offset] <- glm.pred.curr
-    
-        offset <- offset + length(s[s == i])
-    }
-    
-    #ROC Curves
-    library(pROC)
-    plot.roc(smoking_set$deceased.status, glm.top.pred, ci = TRUE, main = "Decease Status Outcome") 
-    plot.roc(obs_outputs, pred_outputs.glm, ci = TRUE, col = "darkblue", add = TRUE) 
-    legend("bottomright", legend = c("GLM Training", "GLM Cross-Validation"), col = c("black", "darkblue"), lwd = 2)
-    
-    auc(smoking_set$deceased.status, glm.top.pred)
-    auc(obs_outputs, pred_outputs.glm)
+glm.top.pred <- predict(deceased.glm, smoking_set, type = "response")
+
+#Random Forest
+library(randomForest)
+rf.top <- randomForest(deceased.status ~ age +smoking.status + race, data = smoking_set, 
+                       ntree = 100, importance = TRUE)
+rf.top
+
+rf.top$importance
+
+rf.top.pred <- predict(rf.top, smoking_set, type = "prob")
+
+#10-fold cross-validation
+N = nrow(smoking_set)
+K = 10
+set.seed(1234)
+s = sample(1:K, size = N, replace = T)
+pred_outputs.glm <- vector(mode = "numeric", length = N)
+pred_outputs.rf <- vector(mode = "numeric", length = N)
+obs_outputs <- vector(mode = "numeric", length = N)
+offset <- 0
+for(i in 1:K){
+    train <- filter(smoking_set, s != i)
+    test <- filter(smoking_set, s == i)
+    obs_outputs[1:length(s[s == i]) + offset] <- test$deceased.status
+    #GLM train/test
+    glm <- glm(deceased.status ~ age +smoking.status + race, data = train, family = binomial(logit))
+    glm.pred.curr <- predict(glm, test, type = "response")
+    pred_outputs.glm[1:length(s[s == i]) + offset] <- glm.pred.curr
+
+    #RF train/test
+    rf <- randomForest(deceased.status ~ age +smoking.status + race, data = train, ntree = 100)
+    rf.pred.curr <- predict(rf, newdata = test, type = "prob") 
+    pred_outputs.rf[1:length(s[s == i]) + offset] <- rf.pred.curr[ , 2]
+
+    offset <- offset + length(s[s == i])
+}
+
+#ROC Curves
+library(pROC)
+plot.roc(smoking_set$deceased.status, glm.top.pred, ci = TRUE, main = "Decease Status Outcome") 
+plot.roc(obs_outputs, pred_outputs.glm, ci = TRUE, col = "darkblue", add = TRUE) 
+plot.roc(smoking_set$deceased.status, rf.top.pred[, 2], ci = TRUE, col = "darkgreen", add = TRUE)
+
+plot.roc(obs_outputs, pred_outputs.rf, ci = TRUE, col = "red", add = TRUE) 
+legend("bottomright", legend = c("GLM Training", "GLM Cross-Validation", "RF Training", "RF Cross-Validation"), col = c("black", "darkblue", "darkgreen", "red"), lwd = 2)
+
+auc(smoking_set$deceased.status, glm.top.pred)
+
+auc(obs_outputs, pred_outputs.glm)
+
+auc(smoking_set$deceased.status, rf.top.pred[ , 2])
+
+auc(obs_outputs, pred_outputs.rf)
 ```
-The ROC curve plot for ventilator use (multivariate model) is shown below and AUROC was 0.652 on training data and 0.653 on 10-fold cross-validation respectively. 
+The ROC curve plots for ventilator use for both the models were shown below and AUROC was 0.652 on training data and 0.643 on 10-fold cross-validation for logistic regression and for RF they were 0.58 and 0.51 respectively. 
 
 ```{r eval = TRUE}
        
-      #FOR Ventilator
-      #Logistic regression
-      glm.top.pred <- predict(ventilator.glm, smoking_set, type = "response")
-      #10-fold cross-validation
-      N = nrow(COVID.clean)
-      K = 10
-      set.seed(1234)
-      s = sample(1:K, size = N, replace = T)
-      pred_outputs.glm <- vector(mode = "numeric", length = N)
-      obs_outputs <- vector(mode = "numeric", length = N)
-      offset <- 0
-      for(i in 1:K){
-          train <- filter(COVID.clean, s != i)
-          test <- filter(COVID.clean, s == i)
-          obs_outputs[1:length(s[s == i]) + offset] <- test$ventilator
-          #GLM train/test
-          glm <- glm(ventilator ~ age +gender + obesity, data = train, family = binomial(logit))
-          glm.pred.curr <- predict(glm, test, type = "response")
-          pred_outputs.glm[1:length(s[s == i]) + offset] <- glm.pred.curr
-      
-          offset <- offset + length(s[s == i])
-      }
-      
-      #ROC Curves
-      library(pROC)
-      plot.roc(smoking_set$ventilator, glm.top.pred, ci = TRUE, main = "Ventilator Outcome") 
-      plot.roc(obs_outputs, pred_outputs.glm, ci = TRUE, col = "darkblue", add = TRUE) 
-      legend("bottomright", legend = c("GLM Training", "GLM Cross-Validation"), col = c("black", "darkblue"), lwd = 2)
-      
-      auc(smoking_set$ventilator, glm.top.pred)
-      auc(obs_outputs, pred_outputs.glm)
+#FOR Ventilator
+glm.top.pred <- predict(ventilator.glm, smoking_set, type = "response")
+
+#Random Forest
+library(randomForest)
+rf.top <- randomForest(ventilator ~ age +gender + obesity, data = smoking_set, 
+                       ntree = 100, importance = TRUE)
+rf.top
+
+rf.top$importance
+
+rf.top.pred <- predict(rf.top, smoking_set, type = "prob")
+
+#10-fold cross-validation
+N = nrow(smoking_set)
+K = 10
+set.seed(1234)
+s = sample(1:K, size = N, replace = T)
+pred_outputs.glm <- vector(mode = "numeric", length = N)
+pred_outputs.rf <- vector(mode = "numeric", length = N)
+obs_outputs <- vector(mode = "numeric", length = N)
+offset <- 0
+for(i in 1:K){
+    train <- filter(smoking_set, s != i)
+    test <- filter(smoking_set, s == i)
+    obs_outputs[1:length(s[s == i]) + offset] <- test$ventilator
+    #GLM train/test
+    glm <- glm(ventilator ~ age +gender + obesity, data = train, family = binomial(logit))
+    glm.pred.curr <- predict(glm, test, type = "response")
+    pred_outputs.glm[1:length(s[s == i]) + offset] <- glm.pred.curr
+
+    #RF train/test
+    rf <- randomForest(ventilator ~ age +gender + obesity, data = train, ntree = 100)
+    rf.pred.curr <- predict(rf, newdata = test, type = "prob") 
+    pred_outputs.rf[1:length(s[s == i]) + offset] <- rf.pred.curr[ , 2]
+
+    offset <- offset + length(s[s == i])
+}
+
+#ROC Curves
+library(pROC)
+plot.roc(smoking_set$ventilator, glm.top.pred, ci = TRUE, main = "Ventilator Use Outcome") 
+plot.roc(obs_outputs, pred_outputs.glm, ci = TRUE, col = "darkblue", add = TRUE) 
+plot.roc(smoking_set$ventilator, rf.top.pred[, 2], ci = TRUE, col = "darkgreen", add = TRUE)
+
+plot.roc(obs_outputs, pred_outputs.rf, ci = TRUE, col = "red", add = TRUE) 
+legend("bottomright", legend = c("GLM Training", "GLM Cross-Validation", "RF Training", "RF Cross-Validation"), col = c("black", "darkblue", "darkgreen", "red"), lwd = 2)
+
+auc(smoking_set$ventilator, glm.top.pred)
+
+auc(obs_outputs, pred_outputs.glm)
+
+auc(smoking_set$ventilator, rf.top.pred[ , 2])
+
+auc(obs_outputs, pred_outputs.rf)
 ```
-The ROC curve plot for ICU admission (multivariate model) is shown below and AUROC was 0.625 on training data and 0.638 on 10-fold cross-validation respectively. 
+On the training data and on 10-fold cross-validation for logistic regression, the AOCs were 0.652 and 0.643 where for RF, the AOCs were 0.58 and 0.51 respectively and the curve plots were shown below.
 
 ```{r eval = TRUE}     
-      #FOR ICU
-      #Logistic regression
-      glm.top.pred <- predict(icu.glm , smoking_set, type = "response")
-      #10-fold cross-validation
-      N = nrow(COVID.clean)
-      K = 10
-      set.seed(1234)
-      s = sample(1:K, size = N, replace = T)
-      pred_outputs.glm <- vector(mode = "numeric", length = N)
-      #pred_outputs.rf <- vector(mode = "numeric", length = N)
-      obs_outputs <- vector(mode = "numeric", length = N)
-      offset <- 0
-      for(i in 1:K){
-          train <- filter(COVID.clean, s != i)
-          test <- filter(COVID.clean, s == i)
-          obs_outputs[1:length(s[s == i]) + offset] <- test$icu
-          #GLM train/test
-          glm <- glm(ventilator ~ age +gender + obesity, data = train, family = binomial(logit))
-          glm.pred.curr <- predict(glm, test, type = "response")
-          pred_outputs.glm[1:length(s[s == i]) + offset] <- glm.pred.curr
-      
-          offset <- offset + length(s[s == i])
-      }
-      
-      #ROC Curves
-      library(pROC)
-      plot.roc(smoking_set$ventilator, glm.top.pred, ci = TRUE, main = "ICU Outcome") 
-      plot.roc(obs_outputs, pred_outputs.glm, ci = TRUE, col = "darkblue", add = TRUE) 
-      legend("bottomright", legend = c("GLM Training", "GLM Cross-Validation"), col = c("black", "darkblue"), lwd = 2)
-      
-      auc(smoking_set$icu, glm.top.pred)
-      auc(obs_outputs, pred_outputs.glm)
-``` 
-Conclusion: Overall, this project has provided some meaningful insights showing a relationship between patient characterstics and the COVID outcomes. The univariate analysis revealed that for ICU admission,ventilator use and mortality, the varaibles such as age, gender, smoking history and obesity have an association to predcict the outcomes. 
+        #FOR ICU
+   
+glm.top.pred <- predict(icu.glm, smoking_set, type = "response")
 
-Conclusion not done.
+#Random Forest
+library(randomForest)
+rf.top <- randomForest(icu ~ age +gender + obesity, data = smoking_set, 
+                       ntree = 100, importance = TRUE)
+rf.top
+
+rf.top$importance
+
+rf.top.pred <- predict(rf.top, smoking_set, type = "prob")
+
+#10-fold cross-validation
+N = nrow(smoking_set)
+K = 10
+set.seed(1234)
+s = sample(1:K, size = N, replace = T)
+pred_outputs.glm <- vector(mode = "numeric", length = N)
+pred_outputs.rf <- vector(mode = "numeric", length = N)
+obs_outputs <- vector(mode = "numeric", length = N)
+offset <- 0
+for(i in 1:K){
+    train <- filter(smoking_set, s != i)
+    test <- filter(smoking_set, s == i)
+    obs_outputs[1:length(s[s == i]) + offset] <- test$icu
+    #GLM train/test
+    glm <- glm(icu ~ age +gender + obesity, data = train, family = binomial(logit))
+    glm.pred.curr <- predict(glm, test, type = "response")
+    pred_outputs.glm[1:length(s[s == i]) + offset] <- glm.pred.curr
+
+    #RF train/test
+    rf <- randomForest(icu ~ age +gender + obesity, data = train, ntree = 100)
+    rf.pred.curr <- predict(rf, newdata = test, type = "prob") 
+    pred_outputs.rf[1:length(s[s == i]) + offset] <- rf.pred.curr[ , 2]
+
+    offset <- offset + length(s[s == i])
+}
+
+#ROC Curves
+library(pROC)
+plot.roc(smoking_set$icu, glm.top.pred, ci = TRUE, main = "ICU admission Outcome") 
+plot.roc(obs_outputs, pred_outputs.glm, ci = TRUE, col = "darkblue", add = TRUE) 
+plot.roc(smoking_set$icu, rf.top.pred[, 2], ci = TRUE, col = "darkgreen", add = TRUE)
+
+plot.roc(obs_outputs, pred_outputs.rf, ci = TRUE, col = "red", add = TRUE) 
+legend("bottomright", legend = c("GLM Training", "GLM Cross-Validation", "RF Training", "RF Cross-Validation"), col = c("black", "darkblue", "darkgreen", "red"), lwd = 2)
+
+auc(smoking_set$icu, glm.top.pred)
+
+auc(obs_outputs, pred_outputs.glm)
+
+auc(smoking_set$icu, rf.top.pred[ , 2])
+
+auc(obs_outputs, pred_outputs.rf)
+``` 
+### Conclusion: 
+
+Overall, this project has provided some meaningful insights showing a relationship between patient characterstics and the COVID outcomes. The chi-square analysis between each predictor variable and outcome varaible indicated that there was a significant difference between the expected and observed with a p<.005. The current findings on univariate analysis suggest that age and smoking status were independently associated with ICU, ventialtor use and mortality (decease status) outcomes. Among the multivariate logistic regression models, age, gender and obesity were the significant predictors for ICU admission and ventilator whereas age, race and smoking status were the significant predictors mortality (decease status) outcomes. For ICU admission and ventilator use outcomes, race and smoking status were not significant predcitors and for the mortality (decease status) multivariable regression model, gender and obesity were not significant predcitors. For all combinations of independent variables studied for ICU, ventilator use and decease status, the prediction probability for ICU admission was 28%,for ventilator use it was 24% and for decease status, the predicted probability was 21% respectively. 
+
+The logistic regression and random forest models showed some evidence of overfitting as it was well evident by looking at the data, 
+the AUC obtained with training data was slightly higher than with cross-validation except the ROC/AUROC for decease status logistic regression model. Within the two models, the performance of the logistic regression was slightly better than that of the random forest model.
+
+
+Since ROC Curves are the trade-off between the sensitivity and specificity (or we can say between the false positive and false negative), with a ROC of 0.80 on logistic regression model for predicting decease status (mortality) indicating us this model is optimizing sensitivity without compromising specificity. Both models (logistic regression and RF) did not perform well on predicting outcomes for ICU and ventilator usage with the independant variables that were chosen in the study. Though age, gender and obesity are associated in predicting ICU admission and ventilator use and age, race, gender for predicting mortality, the other socio-demographics variables and patient's existing clinical conditions were not considered in this study and might contribute significantly in predicting outcomes. 
+
+This study has several limitations. The analysis was done from a single hospital system within a given geographic location thus I cannot be sure that we can apply to another region. Moreover, there was lots of missingness in the data such as other races and ethnicity information were missing. Only one comorbidity was used in this study to model the outcomes. Finally, a larger sample size would help us to determine whether the current variables used to model the outcomes were truly significant or not.
+
 
 ### About Peer feedback:
 
