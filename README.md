@@ -53,18 +53,19 @@ summary(decease.glm)
         
 ## Features
 The project has cool features to determine the clinical outcomes such as:
-* Logistic Regression Models
+* Logistic Regression Model
+* Random Forest
 * ROC Curves
 
 To-do list:
-* Need to run the model with more data
+* The Logistic regression and random forest models were used with only limited of data and variables. More data is needed to confirm and validate the models. 
 
 
 ## Status
 Project is done and ready to submit
 
 ## Inspiration
-I have taken this project because of its current importance.
+I have taken this project because of its current importance. Though the vaccine is coming, still the cases were spiking all over the U.S. and more research is needed to understand the behavior of the virus in the human body and its impact to assess. I took the initial step to find out whether certain patient characteristics have any impact on the disease outcomes.
 
 ## Repository
 There were only 3 main files in the repository:

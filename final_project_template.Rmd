@@ -1,5 +1,5 @@
 ---
-title: "Patient Characteristics and racial disparities in determing clinical outcomes among COVID-19 Patients"
+title: "Patient Characteristics in Determing Clinical Outcomes Among COVID-19 Patients"
 author: "Sri Denduluri, Ph.D"
 output: 
   html_document:
@@ -14,21 +14,20 @@ options(width = 400)
 ***
 ### Overview
 According to the published literature, COVID-19 is disproportionately affecting gender, and racial minorities 
-but patient-level observations of ICU admission, ventilator requirement and even mortality by race are very limited. 
-The objective of this study is to systematically determine what patient characteristics including race are associated 
+but patient-level observations of ICU admission, ventilator requirement and even mortality by patient characteristics are very limited. The objective of this study is to systematically determine what patient characteristics including race are associated 
 with COVID-19 outcomes.
 
 
 ### Introduction 
 
-Coronavirus disease is caused by Severe Acute Respiratory Syndrome coronavirus 2 (SARS-CoV-2) and was first detected 
+Coronavirus disease is caused by Severe Acute Respiratory Syndrome Coronavirus 2 (SARS-CoV-2) and was first detected 
 in Wuhan, China in 2019. The disease has impacted over 150 countries and emerged as a global pandemic infecting 
 over 1.5 million patients in the United States as of early June 2020. Since the U.S has become the epicenter of this 
 crisis, multiple studies were undertaken to study the disease manifestations and patient outcomes to show the impact 
 of this crisis nationwide. There is a sharp rise of COVID-19 infections in U.S. and along with population concerns 
 there has also emerged awareness regarding the COVID-19 infections disproportionately impacting racial/ethnic minorities. 
 Multiple studies have been reported that people who belong certain racial and ethnic groups have higher rates of hospitalization. Earlier studies have also reported that people who are aged and smoke and those who have had existing co-morbid conditions 
-are mostly likely to be affected by COVID-19 with higher infection rates, higher disease severity and even mortality. 
+are mostly likely to be affected by COVID-19. These groups will have higher infection rates, disease severity and even mortality. 
 Despite the early studies, patient-level studies with appropriate co-morbid conditions, patient characteristics and 
 clinical outcomes differ by race/ethnicity among hospitalized patients with COVID-19 are lacking.
 
@@ -37,12 +36,12 @@ clinical outcomes differ by race/ethnicity among hospitalized patients with COVI
 
 ### Study Population: 
 
-The de-identified data sets used for this project were pulled from the PennMedicine’s Clarity Database on patients 
+The de-identified data sets used for this project were pulled from the Penn Medicine’s Clarity Database on patients 
 who were visited to one of the hospitals at Penn Medicine for COVID-19 test. The study has the approval by the 
 Institutional Review Board at the University of Pennsylvania as part of Division of Cardiovascular Medicine 
 blanket-IRB approval.
 
-Using SQL-queries, I obtained two data files. First I have pulled the patients who have had COVID-19 confirmed-postive 
+Using SQL-queries, I obtained two data files. First I have pulled the patients who have had COVID-19 confirmed-positive 
 (positive). For these patients, I have obtained the demographics and other-related clinical information that were related 
 to this project.. Demographics and clinical information included Age (in years) , Race (Black, White), Gender (Male Yes/No),
 Smoking Status (Tobacco exposure Yes/No), ICU admission (Yes/No), Ventilator used (Yes/No) and Deceased (Yes/No)) as a 
@@ -80,7 +79,7 @@ Pat_Comorb = read.csv("C:/Users/Administrator/Downloads/COVID_Comorb1.csv",heade
 The summary views of the two data sets that were imported into two data frames were shown below:
     ```{r eval = TRUE}
     str(Pat_Demo)
-    str(Pat_Demo)
+    str(Pat_Comorb)
     ```
 
 The two extracted data frames were then merged into a single data frame which was used for further analyses and the summary view of the final data set was shown below.
@@ -106,17 +105,16 @@ COVID.clean <- Pat_Merged_Data %>%
   str(COVID.clean)
   
 ```
-In addition to Yes/No, the smoking status variable also contains information such as 'Not Asked", so a new data set was created of patients who answered Yes/No to evaulate the effects of smoking on the outcomes.
+In addition to Yes/No, the smoking status variable also contains information such as 'Not Asked", so a new data set was created of patients who answered Yes/No to evaluate the effects of smoking on the outcomes.
 
 ```{r eval = TRUE}
   #Data set for smoking Yes/No
-    smoking_set <- COVID.clean %>% 
+smoking_set <- COVID.clean %>% 
     filter(smoking.status == 'Y' | smoking.status == 'N')
+  
 ```   
     
-The contents of age variable is described as mean(sd)and for other variables, it was described as the percentage of 
-the yes values of the Boolean variables (Male, Black, Obese, Tobacco exposure, ICU admission, Ventilator use 
-and Mortality) respectively.
+The contents of age variable is described as mean(sd)and for other variables, it was described as the percentage (Male, Black, Obese, Tobacco exposure, ICU admission, Ventilator use and Mortality) respectively.  
 
 The logistic regression to model the outcome variables of ICU admission, Ventilator use and Deceased Status were used
 since these outcomes are Boolean. Each of the predictor (independent) variables are either numeric (age) or Boolean 
@@ -187,7 +185,7 @@ The same analysis for ventilator against gender, race, obesity and smoking statu
   sjt.xtab(COVID.clean$ventilator, COVID.clean$obesity, show.cell.prc = FALSE, emph.total = TRUE)
   sjt.xtab(smoking_set$ventilator, smoking_set$smoking.status, show.cell.prc = FALSE, emph.total = TRUE)
 ```
-In contrast, the chi-squre analysis on decease status against gender, race, obesity and smoking.status shows that only race and smoking status showed an association exist between the observed and expected as shown in the tables below.
+In contrast, the chi-square analysis on decease status against gender, race, obesity and smoking.status shows that only race and smoking status showed an association exist between the observed and expected as shown in the tables below.
 
 ```{r eval = TRUE}     
 #deceased.status
@@ -199,7 +197,7 @@ In contrast, the chi-squre analysis on decease status against gender, race, obes
 ```
 ### Univariate Analyses:
 
-The univariate anyalysis of each predictor variable against the each outcome variable has been shown in the following tables. For ICU against age, the p-values for intercept and age were less than 0.001 showing they were very significant. 
+The univariate analysis of each predictor variable against the each outcome variable has been shown in the following tables. For ICU against age, the p-values for intercept and age were less than 0.001 showing they were very significant. 
 
 ```{r eval = TRUE}
 model_age_i <- glm(formula= icu ~ age, data=COVID.clean, family=binomial)
@@ -223,7 +221,7 @@ The univariate analysis for ICU against race,gender, obesity and smoking status 
      tab_model(model_smo_i)
 
 ```
-Unlike ICU, the univariate analysis for ventilator against each predictor variables, except race, all the other varaiables (age,gender, smoking status and obesity) were significant. The p-value for race was 0.372 though the intercept was highly significant (p<0.001). The univariate analysis data for ventilator against the each predictor were shown below.
+Unlike ICU, the univariate analysis for ventilator against each predictor variables, except race, all the other variables (age,gender, smoking status and obesity) were significant. The p-value for race was 0.372 though the intercept was highly significant (p<0.001). The univariate analysis data for ventilator against the each predictor were shown below.
 
 ```{r eval = TRUE}
 
@@ -243,7 +241,7 @@ Unlike ICU, the univariate analysis for ventilator against each predictor variab
       tab_model(model_o_v)
      
 ```
-The univariate analysis for decease status against the predicitor varaibles have shown that gender and obesity were not significant where as age, smoking status and were highly significant as shown below. The p-values for gender and obesity were 0.227 and 0.264 whereas for age, race and smoking status they were <0.001 respectively.
+The univariate analysis for decease status against the predictor variables have shown that gender and obesity were not significant where as age, smoking status and were highly significant as shown below. The p-values for gender and obesity were 0.227 and 0.264 whereas for age, race and smoking status they were <0.001 respectively.
 
 ```{r eval = TRUE}
 
@@ -291,7 +289,7 @@ The variables age and race were significant with p-values of <0.001 and 0.021 fo
     newdata = data.frame(age = 75,smoking.status = "Y", race = "White")
     predict(deceased.glm, newdata, type="response")
 ```
-As noted above, a logistic regression model was created for each outcome variable (ICU, ventilator and decease status)using the predictor varaibles with a p-value <0.1. An ROC curve was plotted for each of the true outcomes (each of the 3) versus the multivariate outcomes (sensitivity vs specificity) with the calculation of AUROC and predictive accuracy using the training data as well as via 10-fold cross-validation.
+As noted above, a logistic regression model was created for each outcome variable (ICU, ventilator and decease status)using the predictor variables with a p-value <0.1. An ROC curve was plotted for each of the true outcomes (each of the 3) versus the multivariate outcomes (sensitivity vs specificity) with the calculation of AUROC and predictive accuracy using the training data as well as via 10-fold cross-validation.
 
 As shown below, the AOC for decease status (mortality) logistic regression model on training data and on 10-fold cross-validation was 0.80 for age, gender and obesity variables where the AOC for RF on training data was 0.70 and on 10-fold cross-validation it was 0.65 respectively.
 
@@ -414,7 +412,7 @@ auc(smoking_set$ventilator, rf.top.pred[ , 2])
 
 auc(obs_outputs, pred_outputs.rf)
 ```
-On the training data and on 10-fold cross-validation for logistic regression, the AOCs were 0.652 and 0.643 where for RF, the AOCs were 0.58 and 0.51 respectively and the curve plots were shown below.
+On the training data and on 10-fold cross-validation the logistic regression for ICU admission, the AOCs were 0.625 and 0.617 where as for RF, the AOCs were 0.59 and 0.55 respectively and the curve plots were shown below.
 
 ```{r eval = TRUE}     
         #FOR ICU
@@ -476,15 +474,15 @@ auc(obs_outputs, pred_outputs.rf)
 ``` 
 ### Conclusion: 
 
-Overall, this project has provided some meaningful insights showing a relationship between patient characterstics and the COVID outcomes. The chi-square analysis between each predictor variable and outcome varaible indicated that there was a significant difference between the expected and observed with a p<.005. The current findings on univariate analysis suggest that age and smoking status were independently associated with ICU, ventialtor use and mortality (decease status) outcomes. Among the multivariate logistic regression models, age, gender and obesity were the significant predictors for ICU admission and ventilator whereas age, race and smoking status were the significant predictors mortality (decease status) outcomes. For ICU admission and ventilator use outcomes, race and smoking status were not significant predcitors and for the mortality (decease status) multivariable regression model, gender and obesity were not significant predcitors. For all combinations of independent variables studied for ICU, ventilator use and decease status, the prediction probability for ICU admission was 28%,for ventilator use it was 24% and for decease status, the predicted probability was 21% respectively. 
+Overall, this project has provided some meaningful insights showing a relationship between patient characteristics and the COVID outcomes. The chi-square analysis between each predictor variable and outcome variable indicated that there was a significant difference between the expected and observed with a p<.005. The current findings on uni-variate analysis suggest that age and smoking status were independently associated with ICU, ventilator use and mortality (decease status) outcomes. Among the multivariate logistic regression models, age, gender and obesity were the significant predictors for ICU admission and ventilator whereas age, race and smoking status were the significant predictors mortality (decease status) outcomes. For ICU admission and ventilator use outcomes, race and smoking status were not significant predictors and for the mortality (decease status) multivariable regression model, gender and obesity were not significant predictors. For all combinations of independent variables studied for ICU, ventilator use and decease status, the prediction probability for ICU admission was 28%,for ventilator use it was 24% and for decease status, the predicted probability was 21% respectively. 
 
-The logistic regression and random forest models showed some evidence of overfitting as it was well evident by looking at the data, 
+The logistic regression and random forest models showed some evidence of over-fitting as it was well evident by looking at the data, 
 the AUC obtained with training data was slightly higher than with cross-validation except the ROC/AUROC for decease status logistic regression model. Within the two models, the performance of the logistic regression was slightly better than that of the random forest model.
 
 
-Since ROC Curves are the trade-off between the sensitivity and specificity (or we can say between the false positive and false negative), with a ROC of 0.80 on logistic regression model for predicting decease status (mortality) indicating us this model is optimizing sensitivity without compromising specificity. Both models (logistic regression and RF) did not perform well on predicting outcomes for ICU and ventilator usage with the independant variables that were chosen in the study. Though age, gender and obesity are associated in predicting ICU admission and ventilator use and age, race, gender for predicting mortality, the other socio-demographics variables and patient's existing clinical conditions were not considered in this study and might contribute significantly in predicting outcomes. 
+Since ROC Curves are the trade-off between the sensitivity and specificity (or we can say between the false positive and false negative), with a ROC of 0.80 on logistic regression model for predicting decease status (mortality) indicating us this model is optimizing sensitivity without compromising specificity. Both models (logistic regression and RF) did not perform well on predicting outcomes for ICU and ventilator usage with the independent variables that were chosen in the study. Though age, gender and obesity are associated in predicting ICU admission and ventilator use and age, race, gender for predicting mortality, the other socio-demographics variables and patient's existing clinical conditions were not considered in this study and might contribute significantly in predicting outcomes. 
 
-This study has several limitations. The analysis was done from a single hospital system within a given geographic location thus I cannot be sure that we can apply to another region. Moreover, there was lots of missingness in the data such as other races and ethnicity information were missing. Only one comorbidity was used in this study to model the outcomes. Finally, a larger sample size would help us to determine whether the current variables used to model the outcomes were truly significant or not.
+This study has several limitations. The analysis was done from a single hospital system within a given geographic location thus I cannot be sure that we can apply to another region. Moreover, there were lots of missingness in the data such as other races and ethnicity information were missing. Only one comorbidity was used in this study to model the outcomes. Finally, a larger sample size would help us to determine whether the current variables used to model the outcomes were truly significant or not.
 
 
 ### About Peer feedback:
@@ -493,7 +491,7 @@ I agree somewhat with the first-round peers suggestions but with the data set I 
 
 I do not have data on the admission and discharge times nor plans to see the extend care after discharge and as it is beyond the scope of this project.I have only very limited data points and that to they are discrete values of Yes/No. 
 
-The second report feedback suggestions were taken into consideration the race_wb issue was fixed. The socio-economic status variable was not available for us to add it to the analyses. Comments were added in the rmd file at the appropriate places and the sections were labelled properly.
+The second report feedback suggestions were taken into consideration the race_wb issue was fixed. The socio-economic status variable was not available for us to add it to the analyses. Comments were added in the rmd file at the appropriate places and the sections were labeled properly.
 
 
 
